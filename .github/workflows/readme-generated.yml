@@ -1,0 +1,28 @@
+name: Check Generated README
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  readme-generated:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync README generator dependencies
+        run: uv sync --locked
+
+      - name: Refresh README
+        run: ./scripts/update-readme.sh
+
+      - name: Verify README is clean
+        run: git diff --exit-code -- README.md

@@ -1,0 +1,18 @@
+{
+  "name": "__GITHUB_OWNER_SLUG__",
+  "owner": {
+    "name": "__AUTHOR_NAME__"
+  },
+  "description": "__AUTHOR_NAME__'s __DISPLAY_NAME__ plugin bundle.",
+  "plugins": [
+    {
+      "name": "__REPO_NAME__",
+      "source": "./",
+      "description": "__PLUGIN_DESCRIPTION__",
+      "author": {
+        "name": "__AUTHOR_NAME__"
+      }
+    }
+  ]
+}
+

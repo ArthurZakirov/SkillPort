@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/__GITHUB_OWNER__/__REPO_NAME__/main/schemas/example.schema.json",
+  "title": "__DISPLAY_NAME__ Example",
+  "type": "object",
+  "additionalProperties": true
+}
+

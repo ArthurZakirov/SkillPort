@@ -1,0 +1,21 @@
+{
+  "name": "__REPO_NAME__",
+  "interface": {
+    "displayName": "__DISPLAY_NAME__"
+  },
+  "plugins": [
+    {
+      "name": "__REPO_NAME__",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
+

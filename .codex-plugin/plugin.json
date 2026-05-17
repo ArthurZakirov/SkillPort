@@ -1,0 +1,38 @@
+{
+  "name": "skillport",
+  "version": "0.1.0",
+  "description": "SkillPort packages agent skills for distribution across machines, repos, Codex, and Claude Code.",
+  "author": {
+    "name": "Arthur Zakirov",
+    "url": "https://github.com/ArthurZakirov"
+  },
+  "homepage": "https://github.com/ArthurZakirov/SkillPort",
+  "repository": "https://github.com/ArthurZakirov/SkillPort",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "codex",
+    "claude-code",
+    "plugin",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SkillPort",
+    "shortDescription": "Agent-skill packaging and distribution",
+    "longDescription": "Packaging workflows for distributing reusable agent skills with plugin manifests, setup scripts, examples, schemas, and installable repo structure.",
+    "developerName": "Arthur Zakirov",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/ArthurZakirov/SkillPort",
+    "defaultPrompt": [
+      "Use SkillPort to package, publish, or update an installable agent-skill repository.",
+      "Prepare plugin metadata, README, setup scripts, examples, schemas, and install checks for distribution.",
+      "Decide whether to use the generator or a whole-repo GitHub template."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

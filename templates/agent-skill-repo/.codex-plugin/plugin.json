@@ -1,0 +1,36 @@
+{
+  "name": "__REPO_NAME__",
+  "version": "0.1.0",
+  "description": "__PLUGIN_DESCRIPTION__",
+  "author": {
+    "name": "__AUTHOR_NAME__",
+    "url": "https://github.com/__GITHUB_OWNER__"
+  },
+  "homepage": "https://github.com/__GITHUB_OWNER__/__REPO_NAME__",
+  "repository": "https://github.com/__GITHUB_OWNER__/__REPO_NAME__",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "codex",
+    "claude-code",
+    "__KEYWORD__"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "__DISPLAY_NAME__",
+    "shortDescription": "__SHORT_DESCRIPTION__",
+    "longDescription": "__PLUGIN_DESCRIPTION__",
+    "developerName": "__AUTHOR_NAME__",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/__GITHUB_OWNER__/__REPO_NAME__",
+    "defaultPrompt": [
+      "Use the right skill from __DISPLAY_NAME__ for this task."
+    ],
+    "brandColor": "__BRAND_COLOR__"
+  }
+}
+

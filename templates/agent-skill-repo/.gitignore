@@ -1,0 +1,12 @@
+AGENTS.local.md
+*.local.md
+*.private.*
+private/
+raw/
+.env
+.secrets/
+node_modules/
+.next/
+.venv/
+__pycache__/
+

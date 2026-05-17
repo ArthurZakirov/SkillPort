@@ -1,0 +1,17 @@
+{
+  "name": "arthur-zakirov",
+  "owner": {
+    "name": "Arthur Zakirov"
+  },
+  "description": "Arthur Zakirov's reusable Claude Code plugin bundle.",
+  "plugins": [
+    {
+      "name": "skillport",
+      "source": "./",
+      "description": "Agent-skill packaging and distribution.",
+      "author": {
+        "name": "Arthur Zakirov"
+      }
+    }
+  ]
+}
