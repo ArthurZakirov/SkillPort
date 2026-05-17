@@ -1,5 +1,7 @@
 # SkillPort
 
+![SkillPort distribution backbone](assets/README-hero.png)
+
 Package agent skills once. Install them anywhere.
 
 SkillPort is the packaging and distribution layer for public skill-pack repos. It packages the repeatable repo scaffolding: README shape, plugin manifests, marketplace metadata, local symlink setup, dummy examples, schema placeholders, and a starter skill.
