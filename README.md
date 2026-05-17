@@ -11,6 +11,7 @@ Use it when you want a new repo that already knows how to install through `npx s
 - Package new agent-skill repositories in a tested installable structure.
 - Avoid re-explaining README, plugin, marketplace, and setup-script conventions.
 - Generate public-safe starter repos with examples, schemas, docs, and a starter skill when packaging a new skill pack.
+- Keep one manifest of skill-pack repos and sync all of them onto a machine with one command.
 - Keep distribution infrastructure separate from individual skill packs such as ProofStack, AgentDesk, SystemSmith, and OpportunityOS.
 
 ## Install With skills.sh
@@ -62,6 +63,40 @@ gh repo edit ArthurZakirov/<template-repo> --template
 ```
 
 See `docs/github-template-strategy.md`.
+
+## Sync Skills Across Machines
+
+SkillPort keeps the source repo list in [`config/skill-repos.txt`](./config/skill-repos.txt).
+
+Run:
+
+```bash
+./scripts/skillport-sync.sh
+```
+
+That loops over every repo in the manifest and runs:
+
+```bash
+npx skills add <repo> --skill '*' -a codex -g -y
+```
+
+Then it runs:
+
+```bash
+npx skills update -g -y
+```
+
+This is intentionally different from local per-repo symlinking. Use `skillport-sync.sh` for normal cross-machine setup and updates. Use `scripts/setup-local-links.sh` only when actively developing a repo locally and wanting live edits before pushing.
+
+Useful variants:
+
+```bash
+./scripts/skillport-sync.sh --all-agents
+./scripts/skillport-sync.sh --agent claude-code
+./scripts/skillport-sync.sh --skip-update
+./scripts/skillport-sync.sh --update-only
+./scripts/skillport-sync.sh --dry-run
+```
 
 ## Included Skills
 
