@@ -150,6 +150,7 @@ Useful variants:
 │   ├── generate-readme.py
 │   ├── install-git-hooks.sh
 │   ├── setup-local-links.sh
+│   ├── skillport-sync.sh
 │   └── update-readme.sh
 ├── skills/
 │   └── skillport-distribution-system/
