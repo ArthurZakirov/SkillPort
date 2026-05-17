@@ -66,7 +66,27 @@ See `docs/github-template-strategy.md`.
 
 ## Sync Skills Across Machines
 
-SkillPort keeps the source repo list in [`config/skill-repos.txt`](./config/skill-repos.txt).
+SkillPort uses a YAML manifest for the source repo list.
+
+Copy the example:
+
+```bash
+cp config/skill-repos.example.yaml config/skill-repos.local.yaml
+```
+
+Then edit `config/skill-repos.local.yaml`:
+
+```yaml
+repos:
+  - owner/first-skill-pack
+  - owner/second-skill-pack
+
+defaults:
+  agent: codex
+  global: true
+```
+
+`config/skill-repos.local.yaml` is ignored by Git so this repository stays reusable for other people.
 
 Run:
 
@@ -96,6 +116,7 @@ Useful variants:
 ./scripts/skillport-sync.sh --skip-update
 ./scripts/skillport-sync.sh --update-only
 ./scripts/skillport-sync.sh --dry-run
+./scripts/skillport-sync.sh --repos-file ~/my-skill-repos.yaml
 ```
 
 ## Included Skills

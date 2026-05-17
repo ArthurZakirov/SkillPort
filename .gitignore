@@ -164,6 +164,7 @@ personal-profile.yaml
 private/
 profiles/*.yaml
 !profiles/*.example.yaml
+config/*.local.yaml
 
 # Spyder project settings
 .spyderproject

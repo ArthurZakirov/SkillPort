@@ -17,7 +17,7 @@ For a new skill-pack repo:
 2. Run `scripts/create-agent-skill-repo.sh` from the SkillPort repo when starting a new skill pack.
 3. Inspect generated placeholders, plugin manifests, README, examples, schemas, and setup script.
 4. Add or update the real skills.
-5. Add the GitHub repo shorthand to `config/skill-repos.txt`.
+5. Add the GitHub repo shorthand to a SkillPort manifest, usually `config/skill-repos.local.yaml`.
 6. Validate locally with:
 
 ```bash
@@ -37,7 +37,9 @@ For normal cross-machine syncing, use:
 ./scripts/skillport-sync.sh
 ```
 
-This reruns `npx skills add <repo> --skill '*' -a codex -g -y` for every repo listed in `config/skill-repos.txt`, then runs `npx skills update -g -y`.
+This reruns `npx skills add <repo> --skill '*' -a codex -g -y` for every repo listed in the selected manifest, then runs `npx skills update -g -y`.
+
+Keep personal repo lists in ignored local files such as `config/skill-repos.local.yaml`, or pass a separate manifest with `--repos-file`. The public SkillPort repo should only ship a neutral example manifest.
 
 Use the sync script for normal machine setup. Use local symlink scripts only for active local development where live edits should be visible before pushing.
 

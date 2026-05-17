@@ -1,0 +1,14 @@
+# Example SkillPort manifest.
+# Copy this file to config/skill-repos.local.yaml and replace the repos with
+# your own public or private skill-pack repositories.
+#
+# The sync script currently reads the `repos` list. Extra fields are ignored so
+# the manifest can grow later without changing file formats.
+
+repos:
+  - owner/example-skill-pack
+  - owner/another-skill-pack
+
+defaults:
+  agent: codex
+  global: true
