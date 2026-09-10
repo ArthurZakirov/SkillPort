@@ -110,6 +110,8 @@ npx skills update -g -y
 
 This is intentionally different from local per-repo symlinking. Use `skillport-sync.sh` for normal cross-machine setup and updates. Use `scripts/setup-local-links.sh` only when actively developing a repo locally and wanting live edits before pushing.
 
+See [cross-device maintenance](docs/cross-device-maintenance.md) for Windows commands, source-versus-install rules, safe migration of existing copies, and private-context handling.
+
 Useful variants:
 
 ```bash
