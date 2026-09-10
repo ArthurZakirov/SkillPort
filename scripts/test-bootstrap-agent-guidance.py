@@ -1,5 +1,6 @@
 """Exercise preservation, preflight, imports and idempotency on either OS."""
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -31,6 +32,15 @@ class BootstrapTests(unittest.TestCase):
             self.assertEqual(backups[0].read_text(), "existing preferences\n")
             bootstrap.install(source, codex, claude)
             self.assertEqual(len(list(claude.glob("guidance-backups/*/CLAUDE.md"))), 1)
+            opencode = root / "opencode"
+            opencode.mkdir()
+            config = opencode / "opencode.json"
+            config.write_text(json.dumps({"theme": "existing", "instructions": ["other.md"]}))
+            bootstrap.install(source, codex, claude, replace=True, opencode_home=opencode)
+            data = json.loads(config.read_text())
+            self.assertEqual(data["theme"], "existing")
+            self.assertEqual(data["instructions"], ["other.md", source.resolve().as_posix()])
+            bootstrap.install(source, codex, claude, opencode_home=opencode)
             (codex / "AGENTS.override.md").write_text("override")
             with self.assertRaises(ValueError):
                 bootstrap.install(source, codex, claude)

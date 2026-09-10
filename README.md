@@ -112,7 +112,7 @@ This is intentionally different from local per-repo symlinking. Use `skillport-s
 
 See [cross-device maintenance](docs/cross-device-maintenance.md) for Windows commands, source-versus-install rules, safe migration of existing copies, and private-context handling.
 
-That guide also covers one Windows-hosted checkout shared with WSL, installing for both Codex and Claude Code, and `scripts/bootstrap-agent-guidance.py` for repo-backed global rules.
+That guide also covers one Windows-hosted checkout shared with WSL, installing for Codex, Claude Code and OpenCode, and `scripts/bootstrap-agent-guidance.py` for repo-backed global rules.
 
 Useful variants:
 
@@ -132,7 +132,7 @@ Useful variants:
 
 | Skill | Description |
 | --- | --- |
-| `skillport-distribution-system` | Use when packaging, publishing, or updating a public agent-skill repository so it can be installed across machines, repos, Codex, Claude Code, and local skill directories. |
+| `skillport-distribution-system` | Use when packaging, publishing, or updating a public agent-skill repository so it can be installed across machines, repos and harnesses including Codex, Claude Code and OpenCode, using shared local skill storage. |
 <!-- END GENERATED SECTION: skills -->
 
 ## Available Commands

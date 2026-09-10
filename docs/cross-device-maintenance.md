@@ -43,13 +43,13 @@ A successful Windows or WSL installation is not proof of macOS installation. Ver
 
 Place canonical source repositories on the Windows filesystem when both environments need direct access. Windows uses `C:/...` and WSL uses `/mnt/c/...` for the same files. Legacy WSL paths may be compatibility symlinks after a verified migration. Do not create a second editable WSL clone or use Git push/pull to transfer changes between these filesystem views. Separate physical devices still need their own checkout and Git synchronization.
 
-Generated skill installs remain per operating system. Include both supported agent targets when installing for Codex and Claude Code:
+Generated skill installs remain per operating system. Include the configured agent targets when installing for Codex, Claude Code and OpenCode:
 
 ```powershell
-npx.cmd -y skills add owner/repository --skill '*' -a codex claude-code -g -y
+npx.cmd -y skills add owner/repository --skill '*' -a codex claude-code opencode -g -y
 ```
 
-Use `npx` instead of `npx.cmd` on Linux/macOS. Verify Claude's `~/.claude/skills` links resolve to the generated install and inspect both agents with `skills ls -g -a codex claude-code`.
+Use `npx` instead of `npx.cmd` on Linux/macOS. Verify Claude's `~/.claude/skills` links resolve to the generated install and inspect both agents with `skills ls -g -a codex claude-code opencode`.
 
 ## Shared global rules
 
@@ -65,3 +65,13 @@ On Windows use `python` and the native absolute source path. The bootstrap uses 
 This bootstrap handles arbitrary global guidance files; `npx skills` does not distribute them. Verify a fresh Codex session actually reads the wrapper target, rather than assuming bare `@` imports work in Codex. Check Claude import behavior in a fresh session where access allows it. Inspect another physical device's existing rules before bootstrapping it.
 
 References: [Codex global instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude memory and imports](https://code.claude.com/docs/en/memory).
+
+## OpenCode and additional harnesses
+
+OpenCode can discover `~/.agents/skills` directly, so no additional skill-content copy is needed. The current skills CLI reports Codex and OpenCode as universal consumers of that tree, with Claude linked to it. Verify these reported targets and the actual paths after installing; do not force every harness into a path it does not support.
+
+The bootstrap merges the shared absolute instruction-file path into `~/.config/opencode/opencode.json` while preserving other JSON settings and instruction entries. Existing JSONC is left untouched for explicit reconciliation. This native `instructions` mechanism loads the common source; it does not rely on Claude's `@` syntax being an OpenCode import. OpenCode also supports `~/.config/opencode/AGENTS.md`, but it is unnecessary when the source is configured through `instructions`.
+
+Verify existing OpenCode installations with `opencode debug config` and `opencode debug skill` when available. Configuration for a not-yet-installed harness is not proof of a live model session. Do not install full applications just to create aliases. Other harnesses, such as OpenClaw or Pi, need their own documented discovery/entrypoint check before claiming support.
+
+References: [OpenCode skills](https://opencode.ai/docs/skills/), [OpenCode rules](https://opencode.ai/docs/rules/).

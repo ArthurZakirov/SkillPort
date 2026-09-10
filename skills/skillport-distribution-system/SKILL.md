@@ -1,13 +1,13 @@
 ---
 name: skillport-distribution-system
-description: Use when packaging, publishing, or updating a public agent-skill repository so it can be installed across machines, repos, Codex, Claude Code, and local skill directories.
+description: Use when packaging, publishing, or updating a public agent-skill repository so it can be installed across machines, repos and harnesses including Codex, Claude Code and OpenCode, using shared local skill storage.
 ---
 
 # SkillPort Distribution System
 
 ## Purpose
 
-Package reusable agent skills once so they can be installed and shared across machines, people, repos, Codex, Claude Code, and local skill directories.
+Package reusable agent skills once so they can be installed and shared across machines, people, repos and harnesses including Codex, Claude Code and OpenCode, using shared local skill storage.
 
 ## Use This Workflow
 
@@ -48,3 +48,11 @@ Use the sync script for normal machine setup. Use local symlink scripts only for
 GitHub template repositories copy an entire repo. They do not directly template a subdirectory.
 
 Use the generator for normal SkillPort workflows. Create a separate minimal GitHub template repo only if you need the GitHub UI or `gh repo create --template` flow.
+
+## Harness-neutral installation and global rules
+
+Use `npx skills add <repo> --skill '*' -a codex claude-code opencode -g -y` for the configured baseline. Inspect the CLI output and `npx skills ls -g -a codex claude-code opencode`: Codex and OpenCode use `~/.agents/skills` directly; Claude's paths are aliases to that per-OS tree. Never add an editable content copy per harness.
+
+Keep one canonical repository checkout shared by Windows and WSL through Windows paths and `/mnt/c`. Generated installs may remain per OS so each installer can maintain its own paths without disturbing unrelated skills. Other physical devices use separate Git-synced checkouts.
+
+Global rules are separate from skills. Use `scripts/bootstrap-agent-guidance.py` with an already reconciled private AGENTS.md source. It configures Codex guidance, a one-line Claude import and OpenCode's global JSON `instructions` reference without copying the rules. See `docs/cross-device-maintenance.md` in the SkillPort repository for preservation and verification steps. Do not assume arbitrary harnesses support the same global file path or import syntax.

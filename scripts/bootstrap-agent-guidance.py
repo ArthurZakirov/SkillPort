@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import json
 import os
 from pathlib import Path
 import shutil
 
 
 def install(source: Path, codex_home: Path, claude_home: Path,
-            replace: bool = False, dry_run: bool = False) -> None:
+            replace: bool = False, dry_run: bool = False,
+            opencode_home: Path | None = None) -> None:
     source = source.resolve(strict=True)
     if not source.is_file() or not source.read_text(encoding="utf-8").strip():
         raise ValueError("Source must be a nonempty UTF-8 guidance file")
@@ -28,6 +30,18 @@ def install(source: Path, codex_home: Path, claude_home: Path,
                "Edit that repository source when updating these rules, not this wrapper.\n")
     imports = f"@{source.as_posix()}\n"
     plans = [(codex, wrapper, os.name != "nt"), (claude, imports, False)]
+    if opencode_home is not None:
+        config = opencode_home / "opencode.json"
+        if (opencode_home / "opencode.jsonc").exists():
+            raise ValueError("Reconcile existing OpenCode JSONC before bootstrapping")
+        data = json.loads(config.read_text(encoding="utf-8")) if config.exists() else {}
+        instructions = data.get("instructions", [])
+        if not isinstance(instructions, list) or not all(isinstance(p, str) for p in instructions):
+            raise ValueError("OpenCode instructions must be an array of paths")
+        if source.as_posix() not in instructions:
+            data["instructions"] = [*instructions, source.as_posix()]
+        data.setdefault("$schema", "https://opencode.ai/config.json")
+        plans.append((config, json.dumps(data, indent=2) + "\n", False))
     pending = []
     for destination, content, link in plans:
         if destination.resolve() == source:
@@ -73,10 +87,11 @@ def main() -> None:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--codex-home", type=Path, default=Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")))
     parser.add_argument("--claude-home", type=Path, default=Path.home() / ".claude")
+    parser.add_argument("--opencode-home", type=Path, default=Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "opencode")
     parser.add_argument("--replace-existing", action="store_true", help="Only after merging old preferences; originals are backed up")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
-    install(args.source, args.codex_home, args.claude_home, args.replace_existing, args.dry_run)
+    install(args.source, args.codex_home, args.claude_home, args.replace_existing, args.dry_run, args.opencode_home)
 
 
 if __name__ == "__main__":
