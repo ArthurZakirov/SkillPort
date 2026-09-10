@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import os
 import re
 import subprocess
 import sys
@@ -170,6 +169,15 @@ def render_tree(lines: list[tuple[int, str]]) -> str:
 
 def build_repo_inventory_section(paths: list[Path]) -> str:
     inventory: list[tuple[int, str]] = []
+    # Windows may materialize tracked symlinks as plain text. Use the index so
+    # generated documentation is identical across checkout configurations.
+    symlink_targets = {}
+    for record in run_git("ls-files", "--stage", "-z").split("\0"):
+        if not record:
+            continue
+        metadata, name = record.split("\t", 1)
+        if metadata.split()[0] == "120000":
+            symlink_targets[Path(name)] = run_git("show", f":{name}").strip()
     for top_level in (".agents", ".claude-plugin", ".claude", ".codex-plugin"):
         entries = sorted(path for path in paths if path.parts[:1] == (top_level,))
         if not entries:
@@ -177,9 +185,8 @@ def build_repo_inventory_section(paths: list[Path]) -> str:
         inventory.append((0, f"{top_level}/"))
         for entry in entries:
             label = "/".join(entry.parts[1:])
-            resolved = ROOT / entry
-            if resolved.is_symlink():
-                label = f"{label} -> {os.readlink(resolved)}"
+            if entry in symlink_targets:
+                label = f"{label} -> {symlink_targets[entry]}"
             inventory.append((1, label))
 
     if (ROOT / ".githooks" / "pre-commit").exists():

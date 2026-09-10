@@ -154,13 +154,13 @@ Useful variants:
 .
 ├── .agents/
 │   ├── plugins/marketplace.json
-│   └── skills
+│   └── skills -> ../skills
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
 ├── .claude/
-│   ├── commands
-│   └── skills
+│   ├── commands -> ../commands
+│   └── skills -> ../skills
 ├── .codex-plugin/
 │   └── plugin.json
 ├── .githooks/
