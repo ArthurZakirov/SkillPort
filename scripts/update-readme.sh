@@ -3,7 +3,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Windows and WSL share sources, but their Python environments cannot mix.
+    export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-.venv-windows}"
+    export PYTHONUTF8=1
+    ;;
+  *)
+    export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+    ;;
+esac
 
 cd "${REPO_ROOT}"
 
