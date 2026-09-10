@@ -112,6 +112,8 @@ This is intentionally different from local per-repo symlinking. Use `skillport-s
 
 See [cross-device maintenance](docs/cross-device-maintenance.md) for Windows commands, source-versus-install rules, safe migration of existing copies, and private-context handling.
 
+That guide also covers one Windows-hosted checkout shared with WSL, installing for both Codex and Claude Code, and `scripts/bootstrap-agent-guidance.py` for repo-backed global rules.
+
 Useful variants:
 
 ```bash
@@ -152,13 +154,13 @@ Useful variants:
 .
 ├── .agents/
 │   ├── plugins/marketplace.json
-│   └── skills -> ../skills
+│   └── skills
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
 ├── .claude/
-│   ├── commands -> ../commands
-│   └── skills -> ../skills
+│   ├── commands
+│   └── skills
 ├── .codex-plugin/
 │   └── plugin.json
 ├── .githooks/
@@ -169,6 +171,7 @@ Useful variants:
 ├── commands/
 │   └── list-skills.md
 ├── scripts/
+│   ├── bootstrap-agent-guidance.py
 │   ├── create-agent-skill-repo.sh
 │   ├── create-claude-command.sh
 │   ├── create-shared-skill.sh
@@ -176,6 +179,7 @@ Useful variants:
 │   ├── install-git-hooks.sh
 │   ├── setup-local-links.sh
 │   ├── skillport-sync.sh
+│   ├── test-bootstrap-agent-guidance.py
 │   └── update-readme.sh
 ├── skills/
 │   └── skillport-distribution-system/

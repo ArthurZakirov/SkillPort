@@ -38,3 +38,30 @@ For active local development, the repository's `setup-local-links.sh` is the sup
 Public skill installation does not distribute private inventory. Keep private facts in a separate private source, install or link only the relevant domain, and verify the public skill's configured lookup path on every machine. Avoid copying an entire private profile into a public skill or into an unrelated workflow.
 
 A successful Windows or WSL installation is not proof of macOS installation. Verify each machine separately; when access is unavailable, provide the commands and clearly mark that machine pending.
+
+## One checkout shared by Windows and WSL
+
+Place canonical source repositories on the Windows filesystem when both environments need direct access. Windows uses `C:/...` and WSL uses `/mnt/c/...` for the same files. Legacy WSL paths may be compatibility symlinks after a verified migration. Do not create a second editable WSL clone or use Git push/pull to transfer changes between these filesystem views. Separate physical devices still need their own checkout and Git synchronization.
+
+Generated skill installs remain per operating system. Include both supported agent targets when installing for Codex and Claude Code:
+
+```powershell
+npx.cmd -y skills add owner/repository --skill '*' -a codex claude-code -g -y
+```
+
+Use `npx` instead of `npx.cmd` on Linux/macOS. Verify Claude's `~/.claude/skills` links resolve to the generated install and inspect both agents with `skills ls -g -a codex claude-code`.
+
+## Shared global rules
+
+Keep private personal rules in a private repository, for example `agent-guidance/AGENTS.md`. Reconcile the existing global Codex and Claude preferences before running:
+
+```bash
+python3 scripts/bootstrap-agent-guidance.py --source /absolute/private-repo/agent-guidance/AGENTS.md --dry-run
+python3 scripts/bootstrap-agent-guidance.py --source /absolute/private-repo/agent-guidance/AGENTS.md --replace-existing
+```
+
+On Windows use `python` and the native absolute source path. The bootstrap uses a WSL/Linux/macOS file symlink for Codex, or a concise load-reference wrapper on Windows without requesting elevated privileges. Claude's global `~/.claude/CLAUDE.md` contains only one absolute `@` import of the source. Source paths must have no whitespace. Existing differing files require the explicit replacement flag and are preserved under `guidance-backups/`; nonempty `AGENTS.override.md` must be reconciled first.
+
+This bootstrap handles arbitrary global guidance files; `npx skills` does not distribute them. Verify a fresh Codex session actually reads the wrapper target, rather than assuming bare `@` imports work in Codex. Check Claude import behavior in a fresh session where access allows it. Inspect another physical device's existing rules before bootstrapping it.
+
+References: [Codex global instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude memory and imports](https://code.claude.com/docs/en/memory).
