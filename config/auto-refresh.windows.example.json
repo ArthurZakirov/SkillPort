@@ -1,0 +1,21 @@
+{
+  "Version": 1,
+  "Environment": {
+    "SKILLPORT_ROOT": "<absolute-windows-skillport-path>",
+    "PRIVATE_CONTEXT_ROOT": "<absolute-windows-private-context-path>",
+    "SKILLPORT_STATE_DIR": "<absolute-windows-state-path>",
+    "SKILLPORT_GIT_BIN": "<absolute-git-executable-path>",
+    "SKILLPORT_NODE_BIN": "<absolute-node-executable-path>",
+    "SKILLPORT_NPX_BIN": "<absolute-npx-cmd-path>",
+    "SKILLPORT_PYTHON_BIN": "<absolute-python-executable-path>",
+    "SKILLPORT_GH_BIN": "<absolute-gh-executable-path>"
+  },
+  "PushPrivateRepositories": [],
+  "PushPublicRepositories": [
+    {
+      "Path": "<absolute-public-repository-path>",
+      "ApprovedHead": "REVIEW_REQUIRED"
+    }
+  ],
+  "RequiredGlobalSkills": []
+}

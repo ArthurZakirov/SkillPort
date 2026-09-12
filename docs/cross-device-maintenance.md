@@ -6,7 +6,7 @@ The Git repository is the editable source. Treat `npx skills` output as generate
 
 1. Inspect `git status`, fetch the source repository and fast-forward only when safe. Preserve uncommitted changes and reconcile divergent edits before installation.
 2. Edit and validate the repository source, then commit and push.
-3. Refresh each machine using the local SkillPort manifest with `./scripts/skillport-sync.sh --skip-update`. This reruns `skills add` for only the selected repositories and avoids updating unrelated installed packs.
+3. Refresh each machine from the private canonical repository registry. Its `skills: true` entries are the only remote packs passed to `skills add`, so unrelated installed packs are untouched.
 4. Check `npx skills ls -g -a codex`, installed file contents, and `~/.agents/.skill-lock.json` to verify discovery and the recorded source.
 
 On native Windows, run the equivalent commands in PowerShell:
@@ -23,7 +23,7 @@ npx -y skills add owner/repository --skill '*' -a codex -g -y
 npx -y skills ls -g -a codex
 ```
 
-Use the actual repository names from the machine's local manifest. A refresh is not a merge: reconcile any manual edits to an installed skill into its repository before refreshing it.
+Use the actual repository names selected by the private registry. A refresh is not a merge: reconcile any manual edits to an installed skill into its repository before refreshing it.
 
 ## Existing installations
 
@@ -53,38 +53,59 @@ npx.cmd -y skills add owner/repository --skill '*' -a codex claude-code opencode
 
 Use `npx` instead of `npx.cmd` on Linux/macOS. Verify Claude's `~/.claude/skills` links resolve to the generated install and inspect both agents with `skills ls -g -a codex claude-code opencode`.
 
-## Shared global rules
+## Layered global rules and one repository registry
 
-Keep private personal rules in a private repository, for example `agent-guidance/AGENTS.md`. Reconcile the existing global Codex and Claude preferences before running:
+Keep synchronized private global rules in exactly two layers per machine: `agent-guidance/common.md` plus either `agent-guidance/macos.md` or `agent-guidance/windows-wsl.md`. `scripts/bootstrap-agent-guidance.py` renders a concrete global Codex `AGENTS.md` atomically from Common + one overlay. The output has a generated marker and source digest; later refreshes may replace only that managed output. A first replacement of any regular file, wrapper, or symlink requires `--replace-existing`, after human comparison, and preserves its effective content under `guidance-backups/`. A nonempty `AGENTS.override.md` remains a hard stop.
 
-```bash
-python3 scripts/bootstrap-agent-guidance.py --source /absolute/private-repo/agent-guidance/AGENTS.md --dry-run
-python3 scripts/bootstrap-agent-guidance.py --source /absolute/private-repo/agent-guidance/AGENTS.md --replace-existing
-```
+Do not rely on a bare `@` line as a Codex import. Claude receives two native imports and OpenCode receives the two paths in its `instructions` array while unrelated settings are preserved. Paths containing spaces are supported. `npx skills` does not distribute arbitrary global instruction files, and running Codex sessions still need a restart to adopt a changed `AGENTS.md` chain.
 
-On Windows use `python` and the native absolute source path. The bootstrap uses a WSL/Linux/macOS file symlink for Codex, or a concise load-reference wrapper on Windows without requesting elevated privileges. Claude's global `~/.claude/CLAUDE.md` contains only one absolute `@` import of the source. Source paths must have no whitespace. Existing differing files require the explicit replacement flag and are preserved under `guidance-backups/`; nonempty `AGENTS.override.md` must be reconciled first.
-
-This bootstrap handles arbitrary global guidance files; `npx skills` does not distribute them. Verify a fresh Codex session actually reads the wrapper target, rather than assuming bare `@` imports work in Codex. Check Claude import behavior in a fresh session where access allows it. Inspect another physical device's existing rules before bootstrapping it.
+Store one structured private registry at `$PRIVATE_CONTEXT_ROOT/skillport/repositories.json`; see `config/repositories.example.json`. Every entry has one logical role, portable checkout kind, refresh flag, and skill-install flag. The updater derives `skillport-root`, `private-context-root`, and sibling checkout paths from the two machine roots. The same registry drives safe Git refresh, the exact remote skill subset, and the generated human-readable repository-role overview. Do not maintain separate checkout and skill-repository inventories.
 
 References: [Codex global instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude memory and imports](https://code.claude.com/docs/en/memory).
 
 ## Automatic macOS refresh
 
-Use `scripts/install-macos-auto-refresh.sh` to create a private local config and a user LaunchAgent. The job runs when loaded at login and at quarter-hour calendar intervals. macOS coalesces missed calendar events and runs one after wake. The refresh command uses a lock, bounds its log, fetches only explicitly configured canonical checkouts, permits only fast-forward updates, refreshes global guidance with `bootstrap-agent-guidance.py`, and reruns the selected remote-backed skill manifest with `skillport-sync.sh --skip-update`.
+Use `scripts/install-macos-auto-refresh.sh` to create a private local config and a user LaunchAgent. The job runs when loaded at login and at quarter-hour calendar intervals. macOS coalesces missed calendar events and runs one after wake. The refresh command uses a lock, bounds its log, fetches only registry-selected canonical checkouts, permits only fast-forward updates, renders Common + macOS global guidance, and reinstalls the registry's selected remote-backed skills.
 
 Keep the real config outside the public repository. A synchronized private repository is a suitable place for the personal skill manifest and global guidance source. The generated `~/.agents/skills` tree remains machine-local and must never become an editable source.
+
+Set machine-local paths through task-specific environment variables. Do not put a device's concrete checkout paths in public files or rely on interactive shell startup files:
+
+- `SKILLPORT_ROOT`: the SkillPort checkout on the current machine.
+- `PRIVATE_CONTEXT_ROOT`: the cross-tool private context checkout on the current machine. The updater derives the repository registry and both private guidance layers from this root.
+- `SKILLPORT_AUTO_REFRESH_CONFIG`, `SKILLPORT_STATE_DIR`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, and `SKILLPORT_GH_BIN`: the machine-local policy file, state directory, and exact executable entrypoints supplied to the LaunchAgent.
+
+The installer writes these values explicitly into the generated LaunchAgent environment. The permission-restricted local config contains only prefixed push and verification policy entries. The same logical root names apply on Windows, but their values are independent native Windows paths; the macOS LaunchAgent and POSIX refresh script intentionally reject Windows path syntax. Paths containing spaces are supported because values remain separate quoted arguments. Node invokes the npx entrypoint directly; because npm-generated command shims use `/usr/bin/env node`, only that child process receives a minimal lookup path derived from `SKILLPORT_NODE_BIN`. The updater never changes or exports the parent process's `PATH`.
 
 The updater never stages, commits, stashes, rebases, resets, cleans, force-pushes, or merges divergent history. A dirty canonical checkout may receive a fast-forward only when Git can preserve its local changes; otherwise the run stops with a concise error.
 
 Automatic push is separate from automatic refresh and is disabled unless a repository is explicitly listed in the private config:
 
-- `PUSH_PRIVATE_REPO` requires remotely verified private visibility, a clean working tree, a configured upstream, strictly ahead-only history, and a silent credential scan.
-- `PUSH_PUBLIC_REPO` requires remotely verified public visibility and all private-repository checks. It also requires an exact reviewed `HEAD` SHA in the config plus a silent personal-data scan. `REVIEW_REQUIRED` is the fail-closed default. A new commit invalidates the previous approval.
+- `SKILLPORT_PUSH_PRIVATE_REPO` requires remotely verified private visibility, a clean working tree, a configured upstream, strictly ahead-only history, and a silent credential scan.
+- `SKILLPORT_PUSH_PUBLIC_REPO` requires remotely verified public visibility and all private-repository checks. It also requires an exact reviewed `HEAD` SHA in the config plus a silent personal-data scan. `REVIEW_REQUIRED` is the fail-closed default. A new commit invalidates the previous approval.
 - Visibility mismatch or unavailable metadata blocks the push. Dirty, behind, divergent, detached, or ambiguous repositories are not changed. Push automation publishes only commits a human already created; it never creates or selects content for publication.
 
 Logs contain repository labels and status codes only. Raw Git, GitHub, scanner, installer, and package-manager output is discarded so errors cannot leak credentials or private content.
 
 Codex guidance and skills have different reload behavior. Codex constructs its `AGENTS.md` instruction chain once per run/session, so an already-running task is not guaranteed to adopt changed global guidance on its next turn; restart that task/session when current guidance matters. Codex automatically detects skill changes, but restart Codex if an installed update does not appear. Neither mechanism promises mid-response hot reload.
+
+## Automatic Windows refresh
+
+`scripts/install-windows-auto-refresh.ps1` creates a permission-restricted JSON machine config and registers a current-user Task Scheduler task. Run the installer from native Windows PowerShell with `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT` set to that machine's native checkout paths. It discovers or accepts explicit `SKILLPORT_GIT_BIN`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, `SKILLPORT_GH_BIN`, and `SKILLPORT_POWERSHELL_BIN` paths, then records the required runtime values in the local config. Concrete device paths never belong in the public repository or synchronized guidance.
+
+```powershell
+$env:SKILLPORT_ROOT = '<absolute-windows-skillport-checkout>'
+$env:PRIVATE_CONTEXT_ROOT = '<absolute-windows-private-context-checkout>'
+& "$env:SKILLPORT_ROOT\scripts\install-windows-auto-refresh.ps1" -ReplaceExisting
+```
+
+Add repeatable `-PushPrivateRepository`, `-PushPublicRepository`, or `-RequiredGlobalSkill` values only when explicitly intended. Public push entries are written as `REVIEW_REQUIRED`; replace that token with the exact reviewed 40-character `HEAD` only in the protected local config.
+
+The task starts immediately after installation, at current-user logon, and through a daily trigger repeated every 15 minutes for the full day. `StartWhenAvailable` catches a missed scheduled run after sleep, while `IgnoreNew` plus the updater's exclusive file lock prevents overlap. A standalone workstation-unlock trigger is intentionally omitted: Security event 4801 depends on audit policy and event-log access and is not reliably portable. Logon plus at-most-15-minute repetition provides deterministic coverage after unlock without requiring elevated event subscriptions.
+
+The Windows updater uses the same registry and safety model as macOS. It fetches first, refuses divergent history, skips dirty checkouts when a fast-forward would be required, and never stages, commits, stashes, rebases, resets, cleans, or force-pushes. Optional ordinary pushes use verified remote visibility, clean ahead-only history, silent credential scans, and the same exact-SHA plus personal-data gate for public repositories. Logs are bounded and contain only sanitized repository labels, operation names, and status codes; raw command output, remote URLs, configuration, and environment contents are never logged.
+
+Static cross-platform tests validate the PowerShell safety and Task Scheduler contract on non-Windows development machines. The installer dry run, task XML registration, ACLs, task execution, sleep/wake catch-up, and installed Codex/skills discovery must still be verified on a real Windows host before declaring that host complete.
 
 ## OpenCode and additional harnesses
 

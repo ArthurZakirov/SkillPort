@@ -2,15 +2,16 @@
 
 umask 077
 
-CONFIG_FILE="${HOME}/.config/SkillPort/auto-refresh.conf"
+CONFIG_FILE="${SKILLPORT_AUTO_REFRESH_CONFIG:-}"
 MAX_LOG_BYTES=131072
 
 usage() {
   cat <<'EOF'
 Usage: skillport-auto-refresh.sh [--config <absolute-path>]
 
-Safely refresh configured Git-backed guidance, private workstation context,
-and remote-installed global skills. Optional pushes never create commits.
+Requires SKILLPORT_ROOT, PRIVATE_CONTEXT_ROOT,
+SKILLPORT_STATE_DIR, SKILLPORT_NODE_BIN, SKILLPORT_NPX_BIN,
+SKILLPORT_PYTHON_BIN, and SKILLPORT_GH_BIN in the environment.
 EOF
 }
 
@@ -32,20 +33,13 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-case "$CONFIG_FILE" in
+case "${CONFIG_FILE:-}" in
   /*) ;;
-  *) printf 'skillport-auto-refresh: config path must be absolute\n' >&2; exit 2;;
+  '') printf 'skillport-auto-refresh: SKILLPORT_AUTO_REFRESH_CONFIG is unset\n' >&2; exit 2;;
+  *) printf 'skillport-auto-refresh: config path must be an absolute POSIX path\n' >&2; exit 2;;
 esac
 [ -f "$CONFIG_FILE" ] || { printf 'skillport-auto-refresh: config is missing\n' >&2; exit 2; }
 
-SKILLPORT_REPO=
-SKILL_REPOS_FILE=
-GUIDANCE_REPO=
-GUIDANCE_SOURCE=
-STATE_DIR=
-NPX_BIN=
-PYTHON_BIN=
-GH_BIN=
 PUSH_PRIVATE_REPOS=()
 PUSH_PUBLIC_REPOS=()
 REQUIRED_GLOBAL_SKILLS=()
@@ -75,21 +69,13 @@ while IFS= read -r raw_line || [ -n "$raw_line" ]; do
   value="$TRIMMED"
   [ -n "$value" ] || { printf 'skillport-auto-refresh: empty config value\n' >&2; exit 2; }
   case "$key" in
-    SKILLPORT_REPO) [ -z "$SKILLPORT_REPO" ] || exit 2; SKILLPORT_REPO="$value";;
-    SKILL_REPOS_FILE) [ -z "$SKILL_REPOS_FILE" ] || exit 2; SKILL_REPOS_FILE="$value";;
-    GUIDANCE_REPO) [ -z "$GUIDANCE_REPO" ] || exit 2; GUIDANCE_REPO="$value";;
-    GUIDANCE_SOURCE) [ -z "$GUIDANCE_SOURCE" ] || exit 2; GUIDANCE_SOURCE="$value";;
-    STATE_DIR) [ -z "$STATE_DIR" ] || exit 2; STATE_DIR="$value";;
-    NPX_BIN) [ -z "$NPX_BIN" ] || exit 2; NPX_BIN="$value";;
-    PYTHON_BIN) [ -z "$PYTHON_BIN" ] || exit 2; PYTHON_BIN="$value";;
-    GH_BIN) [ -z "$GH_BIN" ] || exit 2; GH_BIN="$value";;
-    PUSH_PRIVATE_REPO)
+    SKILLPORT_PUSH_PRIVATE_REPO)
       PUSH_PRIVATE_REPOS+=("$value")
       ;;
-    PUSH_PUBLIC_REPO)
+    SKILLPORT_PUSH_PUBLIC_REPO)
       PUSH_PUBLIC_REPOS+=("$value")
       ;;
-    REQUIRED_GLOBAL_SKILL)
+    SKILLPORT_REQUIRED_GLOBAL_SKILL)
       case "$value" in *[!A-Za-z0-9._-]*) printf 'skillport-auto-refresh: invalid required skill name\n' >&2; exit 2;; esac
       REQUIRED_GLOBAL_SKILLS+=("$value")
       ;;
@@ -100,24 +86,42 @@ while IFS= read -r raw_line || [ -n "$raw_line" ]; do
   esac
 done < "$CONFIG_FILE"
 
-for required_value in "$SKILLPORT_REPO" "$SKILL_REPOS_FILE" "$GUIDANCE_REPO" "$GUIDANCE_SOURCE" "$STATE_DIR" "$NPX_BIN" "$PYTHON_BIN" "$GH_BIN"; do
-  [ -n "$required_value" ] || { printf 'skillport-auto-refresh: required config key is missing\n' >&2; exit 2; }
+for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN SKILLPORT_GH_BIN; do
+  case "$required_name" in
+    SKILLPORT_ROOT) required_value="${SKILLPORT_ROOT:-}";;
+    PRIVATE_CONTEXT_ROOT) required_value="${PRIVATE_CONTEXT_ROOT:-}";;
+    SKILLPORT_STATE_DIR) required_value="${SKILLPORT_STATE_DIR:-}";;
+    SKILLPORT_NODE_BIN) required_value="${SKILLPORT_NODE_BIN:-}";;
+    SKILLPORT_NPX_BIN) required_value="${SKILLPORT_NPX_BIN:-}";;
+    SKILLPORT_PYTHON_BIN) required_value="${SKILLPORT_PYTHON_BIN:-}";;
+    SKILLPORT_GH_BIN) required_value="${SKILLPORT_GH_BIN:-}";;
+  esac
+  [ -n "$required_value" ] || { printf 'skillport-auto-refresh: required environment variable %s is unset\n' "$required_name" >&2; exit 2; }
   case "$required_value" in
     /*) ;;
-    *) printf 'skillport-auto-refresh: configured paths must be absolute\n' >&2; exit 2;;
+    *) printf 'skillport-auto-refresh: %s must be an absolute POSIX path\n' "$required_name" >&2; exit 2;;
   esac
 done
 
-[ -x "$NPX_BIN" ] || { printf 'skillport-auto-refresh: npx executable is unavailable\n' >&2; exit 2; }
-[ -x "$PYTHON_BIN" ] || { printf 'skillport-auto-refresh: python executable is unavailable\n' >&2; exit 2; }
-[ -x "$GH_BIN" ] || { printf 'skillport-auto-refresh: GitHub metadata executable is unavailable\n' >&2; exit 2; }
-PATH="$(/usr/bin/dirname "$NPX_BIN"):$(/usr/bin/dirname "$GH_BIN"):/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-export PATH
+[ -x "$SKILLPORT_NODE_BIN" ] || { printf 'skillport-auto-refresh: node executable is unavailable\n' >&2; exit 2; }
+[ -f "$SKILLPORT_NPX_BIN" ] || { printf 'skillport-auto-refresh: npx entrypoint is unavailable\n' >&2; exit 2; }
+[ -x "$SKILLPORT_PYTHON_BIN" ] || { printf 'skillport-auto-refresh: python executable is unavailable\n' >&2; exit 2; }
+[ -x "$SKILLPORT_GH_BIN" ] || { printf 'skillport-auto-refresh: GitHub metadata executable is unavailable\n' >&2; exit 2; }
 
-/bin/mkdir -p "$STATE_DIR"
-/bin/chmod 700 "$STATE_DIR"
-LOCK_DIR="$STATE_DIR/refresh.lock"
-LOG_FILE="$STATE_DIR/refresh.log"
+REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
+GUIDANCE_COMMON="$PRIVATE_CONTEXT_ROOT/agent-guidance/common.md"
+GUIDANCE_OVERLAY="$PRIVATE_CONTEXT_ROOT/agent-guidance/macos.md"
+GUIDANCE_REPO="$PRIVATE_CONTEXT_ROOT"
+for derived_name in REGISTRY_FILE GUIDANCE_COMMON GUIDANCE_OVERLAY; do
+  case "$derived_name" in REGISTRY_FILE) derived_value="$REGISTRY_FILE";; GUIDANCE_COMMON) derived_value="$GUIDANCE_COMMON";; GUIDANCE_OVERLAY) derived_value="$GUIDANCE_OVERLAY";; esac
+  case "$derived_value" in /*) ;; *) printf 'skillport-auto-refresh: derived paths must be absolute POSIX paths\n' >&2; exit 2;; esac
+  [ -f "$derived_value" ] || { printf 'skillport-auto-refresh: a derived private input is missing\n' >&2; exit 2; }
+done
+
+/bin/mkdir -p "$SKILLPORT_STATE_DIR"
+/bin/chmod 700 "$SKILLPORT_STATE_DIR"
+LOCK_DIR="$SKILLPORT_STATE_DIR/refresh.lock"
+LOG_FILE="$SKILLPORT_STATE_DIR/refresh.log"
 
 acquire_lock() {
   if /bin/mkdir "$LOCK_DIR" 2>/dev/null; then
@@ -161,7 +165,7 @@ cleanup() {
 acquire_lock
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
-RUN_DIR="$(/usr/bin/mktemp -d "$STATE_DIR/run.XXXXXX")" || exit 1
+RUN_DIR="$(/usr/bin/mktemp -d "$SKILLPORT_STATE_DIR/run.XXXXXX")" || exit 1
 COMMAND_OUTPUT="$RUN_DIR/command.out"
 
 rotate_log() {
@@ -195,6 +199,21 @@ run_quiet() {
   : > "$COMMAND_OUTPUT"
   log "ERROR $label failed status=$command_status"
   return "$command_status"
+}
+
+write_registry_view() {
+  registry_command="$1"
+  destination="$2"
+  : > "$COMMAND_OUTPUT"
+  if "$SKILLPORT_PYTHON_BIN" "$SKILLPORT_ROOT/scripts/repository_registry.py" "$REGISTRY_FILE" "$registry_command" > "$destination" 2> "$COMMAND_OUTPUT"; then
+    : > "$COMMAND_OUTPUT"
+    log "repository_registry $registry_command ok"
+    return 0
+  fi
+  registry_status=$?
+  : > "$COMMAND_OUTPUT"
+  log "ERROR repository_registry $registry_command failed status=$registry_status"
+  return "$registry_status"
 }
 
 repo_label() {
@@ -241,6 +260,11 @@ safe_git_refresh() {
     return 1
   fi
   if [ "$behind" -gt 0 ]; then
+    git_capture "repo=$repo_name worktree_check" /usr/bin/git -C "$repo_dir" status --porcelain --untracked-files=normal || return 1
+    if [ -n "$CAPTURED_VALUE" ]; then
+      log "repo=$repo_name refresh_skipped dirty_worktree"
+      return 0
+    fi
     run_quiet "repo=$repo_name fast_forward" /usr/bin/git -C "$repo_dir" merge --ff-only --quiet "$upstream" || {
       log "ERROR repo=$repo_name fast_forward_blocked"
       return 1
@@ -256,7 +280,7 @@ visibility_for_repo() {
   repo_dir="$1"
   repo_name=$(repo_label "$repo_dir")
   : > "$COMMAND_OUTPUT"
-  if CAPTURED_VALUE=$(cd "$repo_dir" && GH_PROMPT_DISABLED=1 NO_COLOR=1 "$GH_BIN" repo view --json visibility --jq .visibility 2> "$COMMAND_OUTPUT"); then
+  if CAPTURED_VALUE=$(cd "$repo_dir" && GH_PROMPT_DISABLED=1 NO_COLOR=1 "$SKILLPORT_GH_BIN" repo view --json visibility --jq .visibility 2> "$COMMAND_OUTPUT"); then
     : > "$COMMAND_OUTPUT"
   else
     visibility_status=$?
@@ -364,10 +388,30 @@ safe_git_push() {
 }
 
 log 'refresh_start'
-safe_git_refresh "$SKILLPORT_REPO" || exit 1
-if [ "$GUIDANCE_REPO" != "$SKILLPORT_REPO" ]; then
+safe_git_refresh "$SKILLPORT_ROOT" || exit 1
+if [ "$GUIDANCE_REPO" != "$SKILLPORT_ROOT" ]; then
   safe_git_refresh "$GUIDANCE_REPO" || exit 1
 fi
+
+CHECKOUTS_FILE="$RUN_DIR/checkouts.tsv"
+write_registry_view checkouts "$CHECKOUTS_FILE" || exit 1
+skillport_parent=$(/usr/bin/dirname "$SKILLPORT_ROOT")
+while IFS=$'\t' read -r registry_name checkout_kind checkout_directory || [ -n "$registry_name" ]; do
+  case "$checkout_kind" in
+    skillport-root) checkout_path="$SKILLPORT_ROOT";;
+    private-context-root) checkout_path="$PRIVATE_CONTEXT_ROOT";;
+    skillport-sibling) checkout_path="$skillport_parent/$checkout_directory";;
+    *) log "ERROR repo=$registry_name unsupported_checkout_kind"; continue;;
+  esac
+  if [ "$checkout_path" = "$SKILLPORT_ROOT" ] || [ "$checkout_path" = "$PRIVATE_CONTEXT_ROOT" ]; then
+    continue
+  fi
+  if [ ! -e "$checkout_path/.git" ]; then
+    log "repo=$registry_name refresh_skipped checkout_missing"
+    continue
+  fi
+  safe_git_refresh "$checkout_path" || log "repo=$registry_name refresh_skipped refresh_failed"
+done < "$CHECKOUTS_FILE"
 
 for repo_dir in "${PUSH_PRIVATE_REPOS[@]}"; do
   case "$repo_dir" in /*) safe_git_push "$repo_dir" PRIVATE;; *) log 'push_skipped invalid_private_repo_path';; esac
@@ -383,9 +427,13 @@ for public_spec in "${PUSH_PUBLIC_REPOS[@]}"; do
   esac
 done
 
-run_quiet 'global_guidance refresh' "$PYTHON_BIN" "$SKILLPORT_REPO/scripts/bootstrap-agent-guidance.py" --source "$GUIDANCE_SOURCE" || exit 1
-run_quiet 'global_skills synchronize' /usr/bin/env SKILLPORT_SKILLS_BIN="$NPX_BIN -y skills" "$SKILLPORT_REPO/scripts/skillport-sync.sh" --repos-file "$SKILL_REPOS_FILE" --skip-update || exit 1
-run_quiet 'global_skills discovery_check' "$NPX_BIN" -y skills ls -g -a codex || exit 1
+run_quiet 'global_guidance refresh' "$SKILLPORT_PYTHON_BIN" "$SKILLPORT_ROOT/scripts/bootstrap-agent-guidance.py" --common "$GUIDANCE_COMMON" --overlay "$GUIDANCE_OVERLAY" --platform macos --registry "$REGISTRY_FILE" || exit 1
+SKILL_REPOS_FILE="$RUN_DIR/skill-repos.txt"
+write_registry_view skills "$SKILL_REPOS_FILE" || exit 1
+run_quiet 'global_skills synchronize' /usr/bin/env SKILLPORT_NODE_BIN="$SKILLPORT_NODE_BIN" SKILLPORT_NPX_BIN="$SKILLPORT_NPX_BIN" "$SKILLPORT_ROOT/scripts/skillport-sync.sh" --repos-file "$SKILL_REPOS_FILE" --skip-update || exit 1
+# npm's generated skill shim resolves `node` through /usr/bin/env. Scope the
+# derived lookup path to this child only; the refresh process never exports it.
+run_quiet 'global_skills discovery_check' /usr/bin/env "PATH=$(/usr/bin/dirname "$SKILLPORT_NODE_BIN"):/usr/bin:/bin:/usr/sbin:/sbin" "$SKILLPORT_NODE_BIN" "$SKILLPORT_NPX_BIN" -y skills ls -g -a codex || exit 1
 for skill_name in "${REQUIRED_GLOBAL_SKILLS[@]}"; do
   if [ ! -f "$HOME/.agents/skills/$skill_name/SKILL.md" ]; then
     log "ERROR global_skills required_skill_missing name=$skill_name"

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "repositories": [
+    {
+      "name": "SkillPort",
+      "source": "owner/SkillPort",
+      "role": "Skill distribution and cross-device maintenance infrastructure.",
+      "checkout": { "kind": "skillport-root" },
+      "refresh": true,
+      "skills": true
+    },
+    {
+      "name": "PrivateContext",
+      "source": "owner/private-context",
+      "role": "Private synchronized guidance, registry, and nonpublic context.",
+      "checkout": { "kind": "private-context-root" },
+      "refresh": true,
+      "skills": false
+    },
+    {
+      "name": "Application",
+      "source": "owner/application",
+      "role": "Application source; not a skill pack.",
+      "checkout": { "kind": "skillport-sibling", "directory": "Application" },
+      "refresh": true,
+      "skills": false
+    }
+  ]
+}

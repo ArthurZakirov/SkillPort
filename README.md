@@ -112,7 +112,7 @@ This is intentionally different from local per-repo symlinking. Use `skillport-s
 
 See [cross-device maintenance](docs/cross-device-maintenance.md) for Windows commands, source-versus-install rules, safe migration of existing copies, and private-context handling.
 
-That guide also covers one Windows-hosted checkout shared with WSL, installing for Codex, Claude Code and OpenCode, and `scripts/bootstrap-agent-guidance.py` for repo-backed global rules.
+That guide also covers one Windows-hosted checkout shared with WSL, installing for Codex, Claude Code and OpenCode, and `scripts/bootstrap-agent-guidance.py` for layered global rules.
 
 Useful variants:
 
@@ -125,11 +125,11 @@ Useful variants:
 ./scripts/skillport-sync.sh --repos-file ~/my-skill-repos.yaml
 ```
 
-## Automatic macOS Refresh
+## Automatic Cross-Device Refresh
 
-`scripts/install-macos-auto-refresh.sh` installs a user LaunchAgent that runs at login/load and on wake-coalesced quarter-hour intervals. It safely fast-forwards configured canonical checkouts, refreshes repo-backed global guidance, and reinstalls selected remote skills into `~/.agents/skills` without turning generated installs into editable sources.
+`scripts/install-macos-auto-refresh.sh` installs a user LaunchAgent for login/load and wake-coalesced quarter-hour runs. `scripts/install-windows-auto-refresh.ps1` installs the corresponding least-privilege current-user Task Scheduler job for logon and 15-minute catch-up runs. Both safely refresh registry-selected checkouts, atomically compose global guidance from Common + one platform overlay, and reinstall only the registry's selected remote skills without turning generated installs into editable sources.
 
-The real configuration stays outside this public repository. Automatic push is separately opt-in and never creates commits: private repositories require verified private visibility and a credential scan, while public repositories additionally require an exact reviewed-HEAD approval and a personal-data scan. See `docs/cross-device-maintenance.md` for the full preservation, visibility, logging, and reload rules.
+Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT`; one private structured registry derives checkout scope, remote skill selection, and the rendered repository overview. Required tool, state, and config paths live in permission-restricted machine configuration rather than shell startup files. Automatic push is separately opt-in and never creates commits: private repositories require verified private visibility and a credential scan, while public repositories additionally require an exact reviewed-HEAD approval and a personal-data scan. See `docs/cross-device-maintenance.md` for the full portability, trigger, preservation, visibility, logging, and reload rules.
 
 ## Included Skills
 
@@ -184,10 +184,15 @@ The real configuration stays outside this public repository. Automatic push is s
 │   ├── generate-readme.py
 │   ├── install-git-hooks.sh
 │   ├── install-macos-auto-refresh.sh
+│   ├── install-windows-auto-refresh.ps1
+│   ├── repository_registry.py
 │   ├── setup-local-links.sh
+│   ├── skillport-auto-refresh.ps1
 │   ├── skillport-auto-refresh.sh
 │   ├── skillport-sync.sh
 │   ├── test-bootstrap-agent-guidance.py
+│   ├── test-repository-registry.py
+│   ├── test-windows-auto-refresh.py
 │   └── update-readme.sh
 ├── skills/
 │   └── skillport-distribution-system/

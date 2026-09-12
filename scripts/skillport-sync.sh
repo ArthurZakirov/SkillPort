@@ -14,6 +14,8 @@ RUN_UPDATE=1
 DRY_RUN=0
 YES=1
 SKILLS_BIN="${SKILLPORT_SKILLS_BIN:-npx skills}"
+NODE_BIN="${SKILLPORT_NODE_BIN:-}"
+NPX_BIN="${SKILLPORT_NPX_BIN:-}"
 
 usage() {
   cat <<'EOF'
@@ -36,6 +38,9 @@ Options:
 Environment:
   SKILLPORT_REPOS_FILE  Repo manifest path override.
   SKILLPORT_SKILLS_BIN  Command prefix. Default: "npx skills".
+  SKILLPORT_NODE_BIN    Optional absolute Node executable path.
+  SKILLPORT_NPX_BIN     Optional absolute npx CLI entrypoint path. Set with
+                        SKILLPORT_NODE_BIN to support paths containing spaces.
 
 Examples:
   ./scripts/skillport-sync.sh
@@ -120,6 +125,14 @@ resolve_repos_file() {
 }
 
 split_skills_bin() {
+  if [[ -n "${NODE_BIN}" || -n "${NPX_BIN}" ]]; then
+    [[ -n "${NODE_BIN}" && -n "${NPX_BIN}" ]] || die "Set both SKILLPORT_NODE_BIN and SKILLPORT_NPX_BIN"
+    # npm-generated command shims use `#!/usr/bin/env node`. Give only this
+    # child process a deterministic runtime lookup derived from the explicit
+    # Node path; do not mutate or export the caller's PATH.
+    SKILLS_CMD=(/usr/bin/env "PATH=$(dirname "${NODE_BIN}"):/usr/bin:/bin:/usr/sbin:/sbin" "${NODE_BIN}" "${NPX_BIN}" -y skills)
+    return 0
+  fi
   # Intentionally simple: SKILLPORT_SKILLS_BIN is for command + fixed args,
   # not arbitrary shell syntax.
   # shellcheck disable=SC2206
