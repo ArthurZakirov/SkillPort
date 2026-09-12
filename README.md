@@ -125,6 +125,12 @@ Useful variants:
 ./scripts/skillport-sync.sh --repos-file ~/my-skill-repos.yaml
 ```
 
+## Automatic macOS Refresh
+
+`scripts/install-macos-auto-refresh.sh` installs a user LaunchAgent that runs at login/load and on wake-coalesced quarter-hour intervals. It safely fast-forwards configured canonical checkouts, refreshes repo-backed global guidance, and reinstalls selected remote skills into `~/.agents/skills` without turning generated installs into editable sources.
+
+The real configuration stays outside this public repository. Automatic push is separately opt-in and never creates commits: private repositories require verified private visibility and a credential scan, while public repositories additionally require an exact reviewed-HEAD approval and a personal-data scan. See `docs/cross-device-maintenance.md` for the full preservation, visibility, logging, and reload rules.
+
 ## Included Skills
 
 <!-- BEGIN GENERATED SECTION: skills -->
@@ -177,7 +183,9 @@ Useful variants:
 │   ├── create-shared-skill.sh
 │   ├── generate-readme.py
 │   ├── install-git-hooks.sh
+│   ├── install-macos-auto-refresh.sh
 │   ├── setup-local-links.sh
+│   ├── skillport-auto-refresh.sh
 │   ├── skillport-sync.sh
 │   ├── test-bootstrap-agent-guidance.py
 │   └── update-readme.sh

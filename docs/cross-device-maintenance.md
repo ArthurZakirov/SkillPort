@@ -37,6 +37,8 @@ For active local development, the repository's `setup-local-links.sh` is the sup
 
 Public skill installation does not distribute private inventory. Keep private facts in a separate private source, install or link only the relevant domain, and verify the public skill's configured lookup path on every machine. Avoid copying an entire private profile into a public skill or into an unrelated workflow.
 
+Prefer one authoritative skill package when instructions and the facts they operate on form one coherent workflow. Choose the repository visibility through a harm-and-benefit review, not a mechanical personal-versus-generic rule. A public workstation skill may include reviewed hardware models, topology, adapters, cabling, workflows, and lessons when disclosure is useful and low-risk; exclude exact location linkage, serial numbers, account or network identifiers, security-device locations, secrets, confidential details, and uncleared drafts. Keep supporting references inside the same skill directory so installation has no cross-repository runtime dependency, and retire the migration source after the reviewed content moves rather than maintaining two authoritative copies.
+
 A successful Windows or WSL installation is not proof of macOS installation. Verify each machine separately; when access is unavailable, provide the commands and clearly mark that machine pending.
 
 ## One checkout shared by Windows and WSL
@@ -65,6 +67,24 @@ On Windows use `python` and the native absolute source path. The bootstrap uses 
 This bootstrap handles arbitrary global guidance files; `npx skills` does not distribute them. Verify a fresh Codex session actually reads the wrapper target, rather than assuming bare `@` imports work in Codex. Check Claude import behavior in a fresh session where access allows it. Inspect another physical device's existing rules before bootstrapping it.
 
 References: [Codex global instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude memory and imports](https://code.claude.com/docs/en/memory).
+
+## Automatic macOS refresh
+
+Use `scripts/install-macos-auto-refresh.sh` to create a private local config and a user LaunchAgent. The job runs when loaded at login and at quarter-hour calendar intervals. macOS coalesces missed calendar events and runs one after wake. The refresh command uses a lock, bounds its log, fetches only explicitly configured canonical checkouts, permits only fast-forward updates, refreshes global guidance with `bootstrap-agent-guidance.py`, and reruns the selected remote-backed skill manifest with `skillport-sync.sh --skip-update`.
+
+Keep the real config outside the public repository. A synchronized private repository is a suitable place for the personal skill manifest and global guidance source. The generated `~/.agents/skills` tree remains machine-local and must never become an editable source.
+
+The updater never stages, commits, stashes, rebases, resets, cleans, force-pushes, or merges divergent history. A dirty canonical checkout may receive a fast-forward only when Git can preserve its local changes; otherwise the run stops with a concise error.
+
+Automatic push is separate from automatic refresh and is disabled unless a repository is explicitly listed in the private config:
+
+- `PUSH_PRIVATE_REPO` requires remotely verified private visibility, a clean working tree, a configured upstream, strictly ahead-only history, and a silent credential scan.
+- `PUSH_PUBLIC_REPO` requires remotely verified public visibility and all private-repository checks. It also requires an exact reviewed `HEAD` SHA in the config plus a silent personal-data scan. `REVIEW_REQUIRED` is the fail-closed default. A new commit invalidates the previous approval.
+- Visibility mismatch or unavailable metadata blocks the push. Dirty, behind, divergent, detached, or ambiguous repositories are not changed. Push automation publishes only commits a human already created; it never creates or selects content for publication.
+
+Logs contain repository labels and status codes only. Raw Git, GitHub, scanner, installer, and package-manager output is discarded so errors cannot leak credentials or private content.
+
+Codex guidance and skills have different reload behavior. Codex constructs its `AGENTS.md` instruction chain once per run/session, so an already-running task is not guaranteed to adopt changed global guidance on its next turn; restart that task/session when current guidance matters. Codex automatically detects skill changes, but restart Codex if an installed update does not appear. Neither mechanism promises mid-response hot reload.
 
 ## OpenCode and additional harnesses
 
