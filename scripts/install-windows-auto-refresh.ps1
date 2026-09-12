@@ -102,6 +102,7 @@ $ActionArguments = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -
 $Escape = { param([string]$Value) [Security.SecurityElement]::Escape($Value) }
 $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $UserSid = $CurrentIdentity.User.Value
+$StartBoundary = (Get-Date).Date.ToString('yyyy-MM-ddTHH:mm:ss')
 $TaskXml = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -109,7 +110,7 @@ $TaskXml = @"
   <Triggers>
     <LogonTrigger><Enabled>true</Enabled><UserId>$(& $Escape $UserSid)</UserId></LogonTrigger>
     <CalendarTrigger>
-      <StartBoundary>2000-01-01T00:00:00</StartBoundary><Enabled>true</Enabled>
+      <StartBoundary>$StartBoundary</StartBoundary><Enabled>true</Enabled>
       <Repetition><Interval>PT15M</Interval><Duration>P1D</Duration><StopAtDurationEnd>false</StopAtDurationEnd></Repetition>
       <ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
     </CalendarTrigger>
