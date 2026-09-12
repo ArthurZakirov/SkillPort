@@ -350,10 +350,10 @@ safe_git_push() {
   if [ "$declared_visibility" = PUBLIC ]; then
     git_capture "repo=$repo_name head_check" /usr/bin/git -C "$repo_dir" rev-parse HEAD || return 0
     current_head="$CAPTURED_VALUE"
-    case "$approved_head" in
-      [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) ;;
-      *) log "repo=$repo_name push_skipped public_release_review_required"; return 0;;
-    esac
+    if [ "${#approved_head}" -ne 40 ] || ! printf '%s' "$approved_head" | /usr/bin/grep -Eq '^[0-9a-fA-F]{40}$'; then
+      log "repo=$repo_name push_skipped public_release_review_required"
+      return 0
+    fi
     [ "$current_head" = "$approved_head" ] || { log "repo=$repo_name push_skipped public_release_review_required"; return 0; }
   fi
   scan_secret_material "$repo_dir" "$upstream" || return 0
