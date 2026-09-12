@@ -73,7 +73,8 @@ Set machine-local paths through task-specific environment variables. Do not put 
 
 - `SKILLPORT_ROOT`: the SkillPort checkout on the current machine.
 - `PRIVATE_CONTEXT_ROOT`: the cross-tool private context checkout on the current machine. The updater derives the repository registry and both private guidance layers from this root.
-- `SKILLPORT_AUTO_REFRESH_CONFIG`, `SKILLPORT_STATE_DIR`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, and `SKILLPORT_GH_BIN`: the machine-local policy file, state directory, and exact executable entrypoints supplied to the LaunchAgent.
+- `SKILLPORT_AUTO_REFRESH_CONFIG`, `SKILLPORT_STATE_DIR`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, and `SKILLPORT_PYTHON_BIN`: the machine-local policy file, state directory, and exact core executable entrypoints supplied to the LaunchAgent.
+- `SKILLPORT_GH_BIN`: an optional GitHub CLI executable used only to verify live repository visibility before an opted-in push. It is not a dependency of fetch, fast-forward, registry processing, guidance composition, or skill installation.
 
 The installer writes these values explicitly into the generated LaunchAgent environment. The permission-restricted local config contains only prefixed push and verification policy entries. The same logical root names apply on Windows, but their values are independent native Windows paths; the macOS LaunchAgent and POSIX refresh script intentionally reject Windows path syntax. Paths containing spaces are supported because values remain separate quoted arguments. Node invokes the npx entrypoint directly; because npm-generated command shims use `/usr/bin/env node`, only that child process receives a minimal lookup path derived from `SKILLPORT_NODE_BIN`. The updater never changes or exports the parent process's `PATH`.
 
@@ -84,6 +85,9 @@ Automatic push is separate from automatic refresh and is disabled unless a repos
 - `SKILLPORT_PUSH_PRIVATE_REPO` requires remotely verified private visibility, a clean working tree, a configured upstream, strictly ahead-only history, and a silent credential scan.
 - `SKILLPORT_PUSH_PUBLIC_REPO` requires remotely verified public visibility and all private-repository checks. It also requires an exact reviewed `HEAD` SHA in the config plus a silent personal-data scan. `REVIEW_REQUIRED` is the fail-closed default. A new commit invalidates the previous approval.
 - Visibility mismatch or unavailable metadata blocks the push. Dirty, behind, divergent, detached, or ambiguous repositories are not changed. Push automation publishes only commits a human already created; it never creates or selects content for publication.
+- A configured push path must also resolve from the canonical private repository registry. Unlisted paths are never pushed.
+
+Missing, unauthenticated, or temporarily failing GitHub CLI is a degraded metadata mode, not a core-refresh failure. Every affected push is skipped fail-closed with a sanitized `visibility_unverified` status, while Git fetch/fast-forward, registry processing, layered guidance, and remote skill installation continue. Git still performs every actual push after all gates pass; GitHub CLI never replaces Git transport or weakens the scans.
 
 Logs contain repository labels and status codes only. Raw Git, GitHub, scanner, installer, and package-manager output is discarded so errors cannot leak credentials or private content.
 
@@ -91,7 +95,7 @@ Codex guidance and skills have different reload behavior. Codex constructs its `
 
 ## Automatic Windows refresh
 
-`scripts/install-windows-auto-refresh.ps1` creates a permission-restricted JSON machine config and registers a current-user Task Scheduler task. Run the installer from native Windows PowerShell with `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT` set to that machine's native checkout paths. It discovers or accepts explicit `SKILLPORT_GIT_BIN`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, `SKILLPORT_GH_BIN`, and `SKILLPORT_POWERSHELL_BIN` paths, then records the required runtime values in the local config. Concrete device paths never belong in the public repository or synchronized guidance.
+`scripts/install-windows-auto-refresh.ps1` creates a permission-restricted JSON machine config and registers a current-user Task Scheduler task. Run the installer from native Windows PowerShell with `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT` set to that machine's native checkout paths. It discovers or accepts explicit `SKILLPORT_GIT_BIN`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, and `SKILLPORT_POWERSHELL_BIN` paths, then records the required runtime values in the local config. `SKILLPORT_GH_BIN` is recorded when discoverable but remains optional for the core updater. Concrete device paths never belong in the public repository or synchronized guidance.
 
 ```powershell
 $env:SKILLPORT_ROOT = '<absolute-windows-skillport-checkout>'
@@ -103,7 +107,7 @@ Add repeatable `-PushPrivateRepository`, `-PushPublicRepository`, or `-RequiredG
 
 The task starts immediately after installation, at current-user logon, and through a daily trigger repeated every 15 minutes for the full day. `StartWhenAvailable` catches a missed scheduled run after sleep, while `IgnoreNew` plus the updater's exclusive file lock prevents overlap. A standalone workstation-unlock trigger is intentionally omitted: Security event 4801 depends on audit policy and event-log access and is not reliably portable. Logon plus at-most-15-minute repetition provides deterministic coverage after unlock without requiring elevated event subscriptions.
 
-The Windows updater uses the same registry and safety model as macOS. It fetches first, refuses divergent history, skips dirty checkouts when a fast-forward would be required, and never stages, commits, stashes, rebases, resets, cleans, or force-pushes. Optional ordinary pushes use verified remote visibility, clean ahead-only history, silent credential scans, and the same exact-SHA plus personal-data gate for public repositories. Logs are bounded and contain only sanitized repository labels, operation names, and status codes; raw command output, remote URLs, configuration, and environment contents are never logged.
+The Windows updater uses the same registry, degraded-metadata behavior, and safety model as macOS. It fetches first, refuses divergent history, skips dirty checkouts when a fast-forward would be required, and never stages, commits, stashes, rebases, resets, cleans, or force-pushes. Optional ordinary pushes require an authenticated, working GitHub CLI to verify live visibility, plus clean ahead-only history and silent credential scans. Public repositories also require the exact-SHA and personal-data gates. Missing metadata skips pushes only. Logs are bounded and contain sanitized repository labels, operation names, and status codes; raw command output, remote URLs, configuration, and environment contents are never logged.
 
 Static cross-platform tests validate the PowerShell safety and Task Scheduler contract on non-Windows development machines. The installer dry run, task XML registration, ACLs, task execution, sleep/wake catch-up, and installed Codex/skills discovery must still be verified on a real Windows host before declaring that host complete.
 

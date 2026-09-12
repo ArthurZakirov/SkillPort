@@ -58,7 +58,7 @@ SKILLPORT_REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
 SKILLPORT_GUIDANCE_COMMON="$PRIVATE_CONTEXT_ROOT/agent-guidance/common.md"
 SKILLPORT_GUIDANCE_OVERLAY="$PRIVATE_CONTEXT_ROOT/agent-guidance/macos.md"
 
-for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_CONFIG SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN SKILLPORT_GH_BIN; do
+for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_CONFIG SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
   case "$required_name" in
     SKILLPORT_ROOT) required_path="$SKILLPORT_ROOT";;
     PRIVATE_CONTEXT_ROOT) required_path="$PRIVATE_CONTEXT_ROOT";;
@@ -67,7 +67,6 @@ for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_
     SKILLPORT_NODE_BIN) required_path="$SKILLPORT_NODE_BIN";;
     SKILLPORT_NPX_BIN) required_path="$SKILLPORT_NPX_BIN";;
     SKILLPORT_PYTHON_BIN) required_path="$SKILLPORT_PYTHON_BIN";;
-    SKILLPORT_GH_BIN) required_path="$SKILLPORT_GH_BIN";;
   esac
   [ -n "$required_path" ] || { printf 'install-macos-auto-refresh: required environment variable %s is unset\n' "$required_name" >&2; exit 2; }
   case "$required_path" in /*) ;; *) printf 'install-macos-auto-refresh: %s must be an absolute POSIX path\n' "$required_name" >&2; exit 2;; esac
@@ -77,7 +76,11 @@ done
 for private_input in "$SKILLPORT_REGISTRY_FILE" "$SKILLPORT_GUIDANCE_COMMON" "$SKILLPORT_GUIDANCE_OVERLAY"; do
   [ -f "$private_input" ] || { printf 'install-macos-auto-refresh: a derived private input is missing\n' >&2; exit 2; }
 done
-[ -x "$SKILLPORT_NODE_BIN" ] && [ -f "$SKILLPORT_NPX_BIN" ] && [ -x "$SKILLPORT_PYTHON_BIN" ] && [ -x "$SKILLPORT_GH_BIN" ] || { printf 'install-macos-auto-refresh: required executable is missing\n' >&2; exit 2; }
+[ -x "$SKILLPORT_NODE_BIN" ] && [ -f "$SKILLPORT_NPX_BIN" ] && [ -x "$SKILLPORT_PYTHON_BIN" ] || { printf 'install-macos-auto-refresh: required executable is missing\n' >&2; exit 2; }
+if [ -n "$SKILLPORT_GH_BIN" ]; then
+  case "$SKILLPORT_GH_BIN" in /*) ;; *) printf 'install-macos-auto-refresh: SKILLPORT_GH_BIN must be an absolute POSIX path\n' >&2; exit 2;; esac
+  [ -x "$SKILLPORT_GH_BIN" ] || { printf 'install-macos-auto-refresh: configured GitHub metadata executable is missing\n' >&2; exit 2; }
+fi
 
 for repo_dir in "${PRIVATE_REPOS[@]}" "${PUBLIC_REPOS[@]}"; do
   [ -z "$repo_dir" ] && continue

@@ -8,7 +8,7 @@
     "SKILLPORT_NODE_BIN": "<absolute-node-executable-path>",
     "SKILLPORT_NPX_BIN": "<absolute-npx-cmd-path>",
     "SKILLPORT_PYTHON_BIN": "<absolute-python-executable-path>",
-    "SKILLPORT_GH_BIN": "<absolute-gh-executable-path>"
+    "SKILLPORT_GH_BIN": ""
   },
   "PushPrivateRepositories": [],
   "PushPublicRepositories": [

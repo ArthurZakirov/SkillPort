@@ -47,7 +47,13 @@ $GitBin = Resolve-Executable 'SKILLPORT_GIT_BIN' @('git.exe', 'git')
 $NodeBin = Resolve-Executable 'SKILLPORT_NODE_BIN' @('node.exe', 'node')
 $NpxBin = Resolve-Executable 'SKILLPORT_NPX_BIN' @('npx.cmd', 'npx')
 $PythonBin = Resolve-Executable 'SKILLPORT_PYTHON_BIN' @('python.exe', 'python3.exe', 'python')
-$GhBin = Resolve-Executable 'SKILLPORT_GH_BIN' @('gh.exe', 'gh')
+$GhBin = ''
+if (-not [string]::IsNullOrWhiteSpace($env:SKILLPORT_GH_BIN)) {
+    $GhBin = Resolve-Executable 'SKILLPORT_GH_BIN' @('gh.exe', 'gh')
+} else {
+    $DiscoveredGh = Get-Command 'gh.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $DiscoveredGh) { $GhBin = $DiscoveredGh.Source }
+}
 $PowerShellBin = Resolve-Executable 'SKILLPORT_POWERSHELL_BIN' @('powershell.exe')
 
 $StateDirectory = if ([string]::IsNullOrWhiteSpace($env:SKILLPORT_STATE_DIR)) {

@@ -129,7 +129,7 @@ Useful variants:
 
 `scripts/install-macos-auto-refresh.sh` installs a user LaunchAgent for login/load and wake-coalesced quarter-hour runs. `scripts/install-windows-auto-refresh.ps1` installs the corresponding least-privilege current-user Task Scheduler job for logon and 15-minute catch-up runs. Both safely refresh registry-selected checkouts, atomically compose global guidance from Common + one platform overlay, and reinstall only the registry's selected remote skills without turning generated installs into editable sources.
 
-Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT`; one private structured registry derives checkout scope, remote skill selection, and the rendered repository overview. Required tool, state, and config paths live in permission-restricted machine configuration rather than shell startup files. Automatic push is separately opt-in and never creates commits: private repositories require verified private visibility and a credential scan, while public repositories additionally require an exact reviewed-HEAD approval and a personal-data scan. See `docs/cross-device-maintenance.md` for the full portability, trigger, preservation, visibility, logging, and reload rules.
+Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT`; one private structured registry derives checkout scope, remote skill selection, and the rendered repository overview. Required tool, state, and config paths live in permission-restricted machine configuration rather than shell startup files. GitHub CLI is optional for core refresh and used only as a live visibility gate for opted-in pushes: if it is missing, unauthenticated, or failing, pushes are skipped while pull, guidance, and skill installation continue. Automatic push never creates commits: private repositories require verified private visibility and a credential scan, while public repositories additionally require an exact reviewed-HEAD approval and a personal-data scan. See `docs/cross-device-maintenance.md` for the full portability, trigger, preservation, degraded-mode, visibility, logging, and reload rules.
 
 ## Included Skills
 
@@ -190,6 +190,7 @@ Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVAT
 │   ├── skillport-auto-refresh.ps1
 │   ├── skillport-auto-refresh.sh
 │   ├── skillport-sync.sh
+│   ├── test-auto-refresh-degraded-mode.py
 │   ├── test-bootstrap-agent-guidance.py
 │   ├── test-repository-registry.py
 │   ├── test-windows-auto-refresh.py

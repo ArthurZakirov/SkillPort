@@ -62,6 +62,14 @@ class WindowsAutoRefreshContractTests(unittest.TestCase):
         self.assertNotIn("@('log', '--format='", REFRESH)
         self.assertNotRegex(REFRESH, r"Write-Status[^\n]*(Output|ErrorPath)")
 
+    def test_github_metadata_is_optional_but_push_visibility_is_not(self):
+        required_block = REFRESH.split("$RequiredEnvironment = @(", 1)[1].split(")", 1)[0]
+        self.assertNotIn("SKILLPORT_GH_BIN", required_block)
+        self.assertIn("metadata_unavailable", REFRESH)
+        self.assertIn("push_skipped visibility_unverified", REFRESH)
+        self.assertIn("push_skipped registry_unlisted", REFRESH)
+        self.assertIn("Get-Command 'gh.exe' -ErrorAction SilentlyContinue", INSTALLER)
+
 
 if __name__ == "__main__":
     unittest.main()

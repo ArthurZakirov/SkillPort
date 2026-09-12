@@ -11,7 +11,8 @@ Usage: skillport-auto-refresh.sh [--config <absolute-path>]
 
 Requires SKILLPORT_ROOT, PRIVATE_CONTEXT_ROOT,
 SKILLPORT_STATE_DIR, SKILLPORT_NODE_BIN, SKILLPORT_NPX_BIN,
-SKILLPORT_PYTHON_BIN, and SKILLPORT_GH_BIN in the environment.
+and SKILLPORT_PYTHON_BIN in the environment. SKILLPORT_GH_BIN is optional;
+without verified GitHub metadata, pushes are skipped while refresh continues.
 EOF
 }
 
@@ -86,7 +87,7 @@ while IFS= read -r raw_line || [ -n "$raw_line" ]; do
   esac
 done < "$CONFIG_FILE"
 
-for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN SKILLPORT_GH_BIN; do
+for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
   case "$required_name" in
     SKILLPORT_ROOT) required_value="${SKILLPORT_ROOT:-}";;
     PRIVATE_CONTEXT_ROOT) required_value="${PRIVATE_CONTEXT_ROOT:-}";;
@@ -94,7 +95,6 @@ for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_STATE_DIR SKI
     SKILLPORT_NODE_BIN) required_value="${SKILLPORT_NODE_BIN:-}";;
     SKILLPORT_NPX_BIN) required_value="${SKILLPORT_NPX_BIN:-}";;
     SKILLPORT_PYTHON_BIN) required_value="${SKILLPORT_PYTHON_BIN:-}";;
-    SKILLPORT_GH_BIN) required_value="${SKILLPORT_GH_BIN:-}";;
   esac
   [ -n "$required_value" ] || { printf 'skillport-auto-refresh: required environment variable %s is unset\n' "$required_name" >&2; exit 2; }
   case "$required_value" in
@@ -106,7 +106,9 @@ done
 [ -x "$SKILLPORT_NODE_BIN" ] || { printf 'skillport-auto-refresh: node executable is unavailable\n' >&2; exit 2; }
 [ -f "$SKILLPORT_NPX_BIN" ] || { printf 'skillport-auto-refresh: npx entrypoint is unavailable\n' >&2; exit 2; }
 [ -x "$SKILLPORT_PYTHON_BIN" ] || { printf 'skillport-auto-refresh: python executable is unavailable\n' >&2; exit 2; }
-[ -x "$SKILLPORT_GH_BIN" ] || { printf 'skillport-auto-refresh: GitHub metadata executable is unavailable\n' >&2; exit 2; }
+if [ -n "${SKILLPORT_GH_BIN:-}" ]; then
+  case "$SKILLPORT_GH_BIN" in /*) ;; *) printf 'skillport-auto-refresh: SKILLPORT_GH_BIN must be an absolute POSIX path\n' >&2; exit 2;; esac
+fi
 
 REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
 GUIDANCE_COMMON="$PRIVATE_CONTEXT_ROOT/agent-guidance/common.md"
@@ -279,6 +281,10 @@ safe_git_refresh() {
 visibility_for_repo() {
   repo_dir="$1"
   repo_name=$(repo_label "$repo_dir")
+  if [ -z "${SKILLPORT_GH_BIN:-}" ] || [ ! -x "$SKILLPORT_GH_BIN" ]; then
+    log "repo=$repo_name push_skipped visibility_unverified metadata_unavailable"
+    return 1
+  fi
   : > "$COMMAND_OUTPUT"
   if CAPTURED_VALUE=$(cd "$repo_dir" && GH_PROMPT_DISABLED=1 NO_COLOR=1 "$SKILLPORT_GH_BIN" repo view --json visibility --jq .visibility 2> "$COMMAND_OUTPUT"); then
     : > "$COMMAND_OUTPUT"
@@ -347,6 +353,11 @@ safe_git_push() {
   approved_head="${3:-}"
   require_git_repo "$repo_dir" || return 0
   repo_name=$(repo_label "$repo_dir")
+  known_repository=0
+  for registered_repo in "${KNOWN_REPO_PATHS[@]}"; do
+    if [ "$repo_dir" = "$registered_repo" ]; then known_repository=1; break; fi
+  done
+  [ "$known_repository" -eq 1 ] || { log "repo=$repo_name push_skipped registry_unlisted"; return 0; }
   visibility_for_repo "$repo_dir" || return 0
   [ "$CAPTURED_VALUE" = "$declared_visibility" ] || {
     log "repo=$repo_name push_skipped visibility_mismatch"
@@ -396,6 +407,18 @@ fi
 CHECKOUTS_FILE="$RUN_DIR/checkouts.tsv"
 write_registry_view checkouts "$CHECKOUTS_FILE" || exit 1
 skillport_parent=$(/usr/bin/dirname "$SKILLPORT_ROOT")
+KNOWN_REPO_PATHS=("$SKILLPORT_ROOT" "$PRIVATE_CONTEXT_ROOT")
+REGISTRY_PATHS_FILE="$RUN_DIR/registry-paths.tsv"
+write_registry_view paths "$REGISTRY_PATHS_FILE" || exit 1
+while IFS=$'\t' read -r registry_name checkout_kind checkout_directory || [ -n "$registry_name" ]; do
+  case "$checkout_kind" in
+    skillport-root) registry_path="$SKILLPORT_ROOT";;
+    private-context-root) registry_path="$PRIVATE_CONTEXT_ROOT";;
+    skillport-sibling) registry_path="$skillport_parent/$checkout_directory";;
+    *) continue;;
+  esac
+  KNOWN_REPO_PATHS+=("$registry_path")
+done < "$REGISTRY_PATHS_FILE"
 while IFS=$'\t' read -r registry_name checkout_kind checkout_directory || [ -n "$registry_name" ]; do
   case "$checkout_kind" in
     skillport-root) checkout_path="$SKILLPORT_ROOT";;

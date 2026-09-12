@@ -62,7 +62,7 @@ def render_overview(repositories: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("registry", type=Path)
-    parser.add_argument("command", choices=("skills", "checkouts", "overview", "validate"))
+    parser.add_argument("command", choices=("skills", "checkouts", "paths", "overview", "validate"))
     args = parser.parse_args()
     repositories = load_registry(args.registry)
     if args.command == "skills":
@@ -73,6 +73,11 @@ def main() -> None:
         for entry in repositories:
             checkout = entry["checkout"]
             if entry["refresh"] and checkout["kind"] != "none":
+                print("\t".join((entry["name"], checkout["kind"], checkout.get("directory", ""))))
+    elif args.command == "paths":
+        for entry in repositories:
+            checkout = entry["checkout"]
+            if checkout["kind"] != "none":
                 print("\t".join((entry["name"], checkout["kind"], checkout.get("directory", ""))))
     elif args.command == "overview":
         print(render_overview(repositories))

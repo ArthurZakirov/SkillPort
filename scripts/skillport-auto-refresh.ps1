@@ -31,8 +31,7 @@ $RequiredEnvironment = @(
     'SKILLPORT_GIT_BIN',
     'SKILLPORT_NODE_BIN',
     'SKILLPORT_NPX_BIN',
-    'SKILLPORT_PYTHON_BIN',
-    'SKILLPORT_GH_BIN'
+    'SKILLPORT_PYTHON_BIN'
 )
 
 foreach ($Name in $RequiredEnvironment) {
@@ -45,6 +44,13 @@ foreach ($Name in $RequiredEnvironment) {
     }
     Set-Item -LiteralPath "Env:$Name" -Value $Value
 }
+$ConfiguredGh = [string]$Config.Environment.SKILLPORT_GH_BIN
+if (-not [string]::IsNullOrWhiteSpace($ConfiguredGh)) {
+    if (-not [IO.Path]::IsPathRooted($ConfiguredGh)) {
+        Stop-WithMessage 'SKILLPORT_GH_BIN must be an absolute Windows path when configured'
+    }
+    Set-Item -LiteralPath 'Env:SKILLPORT_GH_BIN' -Value $ConfiguredGh
+}
 
 $SkillPortRoot = $env:SKILLPORT_ROOT
 $PrivateContextRoot = $env:PRIVATE_CONTEXT_ROOT
@@ -53,12 +59,12 @@ $GitBin = $env:SKILLPORT_GIT_BIN
 $NodeBin = $env:SKILLPORT_NODE_BIN
 $NpxBin = $env:SKILLPORT_NPX_BIN
 $PythonBin = $env:SKILLPORT_PYTHON_BIN
-$GhBin = $env:SKILLPORT_GH_BIN
+$GhBin = $ConfiguredGh
 $RegistryPath = Join-Path $PrivateContextRoot 'skillport\repositories.json'
 $GuidanceCommon = Join-Path $PrivateContextRoot 'agent-guidance\common.md'
 $GuidanceOverlay = Join-Path $PrivateContextRoot 'agent-guidance\windows-wsl.md'
 
-foreach ($Executable in @($GitBin, $NodeBin, $NpxBin, $PythonBin, $GhBin)) {
+foreach ($Executable in @($GitBin, $NodeBin, $NpxBin, $PythonBin)) {
     if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) {
         Stop-WithMessage 'a configured executable is unavailable'
     }
@@ -182,6 +188,10 @@ function Update-SafeRepository {
 function Get-RemoteVisibility {
     param([string]$Repository)
     $Name = Get-RepoLabel $Repository
+    if ([string]::IsNullOrWhiteSpace($GhBin) -or -not (Test-Path -LiteralPath $GhBin -PathType Leaf)) {
+        Write-Status "repo=$Name push_skipped visibility_unverified metadata_unavailable"
+        return $null
+    }
     $PreviousPrompt = $env:GH_PROMPT_DISABLED
     $PreviousColor = $env:NO_COLOR
     try {
@@ -243,6 +253,11 @@ function Push-SafeRepository {
     param([string]$Repository, [string]$DeclaredVisibility, [string]$ApprovedHead = '')
     if (-not [IO.Path]::IsPathRooted($Repository) -or -not (Test-GitRepository $Repository)) { return }
     $Name = Get-RepoLabel $Repository
+    $NormalizedRepository = [IO.Path]::GetFullPath($Repository).TrimEnd('\')
+    if (-not $KnownRepositoryPaths.Contains($NormalizedRepository)) {
+        Write-Status "repo=$Name push_skipped registry_unlisted"
+        return
+    }
     $Visibility = Get-RemoteVisibility $Repository
     if ($null -eq $Visibility -or $Visibility -ne $DeclaredVisibility) {
         Write-Status "repo=$Name push_skipped visibility_mismatch"
@@ -315,9 +330,11 @@ try {
     Update-SafeRepository $SkillPortRoot
     if ($PrivateContextRoot -cne $SkillPortRoot) { Update-SafeRepository $PrivateContextRoot }
     $Repositories = Read-RepositoryRegistry
+    $KnownRepositoryPaths = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($Entry in $Repositories) {
-        if (-not [bool]$Entry.refresh) { continue }
         $Checkout = Resolve-RegistryCheckout $Entry
+        if ($null -ne $Checkout) { $KnownRepositoryPaths.Add([IO.Path]::GetFullPath($Checkout).TrimEnd('\')) | Out-Null }
+        if (-not [bool]$Entry.refresh) { continue }
         if ($null -eq $Checkout -or $Checkout -ceq $SkillPortRoot -or $Checkout -ceq $PrivateContextRoot) { continue }
         $RegistryName = ([string]$Entry.name) -replace '[^A-Za-z0-9._-]', ''
         if (-not (Test-Path -LiteralPath (Join-Path $Checkout '.git'))) {
