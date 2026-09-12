@@ -58,6 +58,8 @@ class WindowsAutoRefreshContractTests(unittest.TestCase):
         self.assertIn("public_release_review_required", REFRESH)
         self.assertIn("personal_data_scan_passed", REFRESH)
         self.assertIn("credential_scan_passed", REFRESH)
+        self.assertIn("@('diff', '--name-only', \"$Upstream..HEAD\"", REFRESH)
+        self.assertNotIn("@('log', '--format='", REFRESH)
         self.assertNotRegex(REFRESH, r"Write-Status[^\n]*(Output|ErrorPath)")
 
 

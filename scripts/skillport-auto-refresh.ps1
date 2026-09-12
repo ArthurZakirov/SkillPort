@@ -209,8 +209,8 @@ function Get-RemoteVisibility {
 function Test-SecretMaterial {
     param([string]$Repository, [string]$Upstream)
     $Name = Get-RepoLabel $Repository
-    $NamesResult = Get-GitValue $Repository "repo=$Name credential_path_scan" @('log', '--format=', '--name-only', "$Upstream..HEAD", '--', '.')
-    $PatchResult = Get-GitValue $Repository "repo=$Name credential_content_scan" @('log', '--format=', '--no-ext-diff', '-p', "$Upstream..HEAD", '--', '.')
+    $NamesResult = Get-GitValue $Repository "repo=$Name credential_path_scan" @('diff', '--name-only', "$Upstream..HEAD", '--', '.')
+    $PatchResult = Get-GitValue $Repository "repo=$Name credential_content_scan" @('diff', '--no-ext-diff', "$Upstream..HEAD", '--', '.')
     if (-not $NamesResult.Success -or -not $PatchResult.Success) { return $false }
     $Names = $NamesResult.Value
     $Patch = (($PatchResult.Value -split "`n") | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') }) -join "`n"
@@ -227,7 +227,7 @@ function Test-SecretMaterial {
 function Test-PublicPersonalData {
     param([string]$Repository, [string]$Upstream)
     $Name = Get-RepoLabel $Repository
-    $PatchResult = Get-GitValue $Repository "repo=$Name personal_data_scan" @('log', '--format=', '--no-ext-diff', '-p', "$Upstream..HEAD", '--', '.')
+    $PatchResult = Get-GitValue $Repository "repo=$Name personal_data_scan" @('diff', '--no-ext-diff', "$Upstream..HEAD", '--', '.')
     if (-not $PatchResult.Success) { return $false }
     $Patch = (($PatchResult.Value -split "`n") | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') }) -join "`n"
     $Pattern = '(?im)([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\+?[0-9][0-9 ()/.-]{8,}[0-9]|(straße|strasse|street|road|avenue|weg|platz)\s+[0-9]+|DE[0-9]{20})'

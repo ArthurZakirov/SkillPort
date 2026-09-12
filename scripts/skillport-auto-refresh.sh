@@ -300,7 +300,7 @@ scan_secret_material() {
   repo_name=$(repo_label "$repo_dir")
   secret_path_pattern='(^|/)(\.env($|\.)|\.npmrc$|\.yarnrc(\.yml)?$|\.netrc$|id_(rsa|dsa|ecdsa|ed25519)(\.pub)?$|.*(secret|credential|token).*)'
   secret_content_pattern="(-----BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY-----|(^|[^A-Z0-9])(AKIA|ASIA)[A-Z0-9]{16}([^A-Z0-9]|$)|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-(proj-)?[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|(api[_-]?key|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token)[[:space:]]*[:=][[:space:]]*[\"']?[A-Za-z0-9_./+=-]{12,})"
-  /usr/bin/git -C "$repo_dir" log --format= --name-only "$upstream..HEAD" -- . | /usr/bin/grep -Ei "$secret_path_pattern" >/dev/null
+  /usr/bin/git -C "$repo_dir" diff --name-only "$upstream..HEAD" -- . | /usr/bin/grep -Ei "$secret_path_pattern" >/dev/null
   scan_status=("${PIPESTATUS[@]}")
   if [ "${scan_status[0]}" -ne 0 ] || [ "${scan_status[1]}" -gt 1 ]; then
     log "repo=$repo_name push_skipped credential_scan_error"
@@ -310,7 +310,7 @@ scan_secret_material() {
     log "repo=$repo_name push_skipped credential_scan_failed"
     return 1
   fi
-  /usr/bin/git -C "$repo_dir" log --format= --no-ext-diff -p "$upstream..HEAD" -- . | /usr/bin/grep -E '^\+' | /usr/bin/grep -Ei "$secret_content_pattern" >/dev/null
+  /usr/bin/git -C "$repo_dir" diff --no-ext-diff "$upstream..HEAD" -- . | /usr/bin/grep -E '^\+' | /usr/bin/grep -Ei "$secret_content_pattern" >/dev/null
   scan_status=("${PIPESTATUS[@]}")
   if [ "${scan_status[0]}" -ne 0 ] || [ "${scan_status[2]}" -gt 1 ]; then
     log "repo=$repo_name push_skipped credential_scan_error"
@@ -328,7 +328,7 @@ scan_public_personal_data() {
   upstream="$2"
   repo_name=$(repo_label "$repo_dir")
   personal_pattern='([[:alnum:]._%+-]+@[[:alnum:].-]+\.[A-Za-z]{2,}|\+?[0-9][0-9 ()/.-]{8,}[0-9]|(straße|strasse|street|road|avenue|weg|platz)[[:space:]]+[0-9]+|DE[0-9]{20})'
-  /usr/bin/git -C "$repo_dir" log --format= --no-ext-diff -p "$upstream..HEAD" -- . | /usr/bin/grep -E '^\+' | /usr/bin/grep -Ei "$personal_pattern" >/dev/null
+  /usr/bin/git -C "$repo_dir" diff --no-ext-diff "$upstream..HEAD" -- . | /usr/bin/grep -E '^\+' | /usr/bin/grep -Ei "$personal_pattern" >/dev/null
   scan_status=("${PIPESTATUS[@]}")
   if [ "${scan_status[0]}" -ne 0 ] || [ "${scan_status[2]}" -gt 1 ]; then
     log "repo=$repo_name push_skipped personal_data_scan_error"
