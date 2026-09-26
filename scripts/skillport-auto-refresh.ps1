@@ -26,7 +26,7 @@ try {
 
 $RequiredEnvironment = @(
     'SKILLPORT_ROOT',
-    'PRIVATE_CONTEXT_ROOT',
+    'AGENTDESK_ROOT',
     'SKILLPORT_STATE_DIR',
     'SKILLPORT_GIT_BIN',
     'SKILLPORT_NODE_BIN',
@@ -53,15 +53,14 @@ if (-not [string]::IsNullOrWhiteSpace($ConfiguredGh)) {
 }
 
 $SkillPortRoot = $env:SKILLPORT_ROOT
-$PrivateContextRoot = $env:PRIVATE_CONTEXT_ROOT
+$AgentDeskRoot = $env:AGENTDESK_ROOT
 $StateDirectory = $env:SKILLPORT_STATE_DIR
 $GitBin = $env:SKILLPORT_GIT_BIN
 $NodeBin = $env:SKILLPORT_NODE_BIN
 $NpxBin = $env:SKILLPORT_NPX_BIN
 $PythonBin = $env:SKILLPORT_PYTHON_BIN
 $GhBin = $ConfiguredGh
-$AgentDeskRoot = if ([string]::IsNullOrWhiteSpace($env:AGENTDESK_ROOT)) { Join-Path (Split-Path -Parent $SkillPortRoot) 'AgentDesk' } else { $env:AGENTDESK_ROOT }
-$RegistryPath = Join-Path $PrivateContextRoot 'skillport\repositories.json'
+$RegistryPath = Join-Path $AgentDeskRoot 'global-guidance\agents-md-references\repositories.json'
 $GuidanceCommon = Join-Path $AgentDeskRoot 'global-guidance\common.md'
 $GuidanceOverlay = Join-Path $AgentDeskRoot 'global-guidance\windows-wsl.md'
 
@@ -310,7 +309,6 @@ function Resolve-RegistryCheckout {
     param($Entry)
     switch ([string]$Entry.checkout.kind) {
         'skillport-root' { return $SkillPortRoot }
-        'private-context-root' { return $PrivateContextRoot }
         'skillport-sibling' {
             $Directory = [string]$Entry.checkout.directory
             if ($Directory -notmatch '^[A-Za-z0-9._-]+$') { throw 'the registry contains an unsafe checkout directory' }
@@ -329,14 +327,13 @@ try {
     }
     Write-Status 'refresh_start'
     Update-SafeRepository $SkillPortRoot
-    if ($PrivateContextRoot -cne $SkillPortRoot) { Update-SafeRepository $PrivateContextRoot }
     $Repositories = Read-RepositoryRegistry
     $KnownRepositoryPaths = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($Entry in $Repositories) {
         $Checkout = Resolve-RegistryCheckout $Entry
         if ($null -ne $Checkout) { $KnownRepositoryPaths.Add([IO.Path]::GetFullPath($Checkout).TrimEnd('\')) | Out-Null }
         if (-not [bool]$Entry.refresh) { continue }
-        if ($null -eq $Checkout -or $Checkout -ceq $SkillPortRoot -or $Checkout -ceq $PrivateContextRoot) { continue }
+        if ($null -eq $Checkout -or $Checkout -ceq $SkillPortRoot) { continue }
         $RegistryName = ([string]$Entry.name) -replace '[^A-Za-z0-9._-]', ''
         if (-not (Test-Path -LiteralPath (Join-Path $Checkout '.git'))) {
             Write-Status "repo=$RegistryName refresh_skipped checkout_missing"
@@ -352,7 +349,7 @@ try {
         Push-SafeRepository ([string]$Entry.Path) 'PUBLIC' ([string]$Entry.ApprovedHead)
     }
 
-    $GuidanceResult = Invoke-Captured -Label 'global_guidance refresh' -FilePath $PythonBin -Arguments @((Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'), '--common', $GuidanceCommon, '--overlay', $GuidanceOverlay, '--platform', 'windows-wsl', '--registry', $RegistryPath) -LogSuccess
+    $GuidanceResult = Invoke-Captured -Label 'global_guidance refresh' -FilePath $PythonBin -Arguments @((Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'), '--common', $GuidanceCommon, '--overlay', $GuidanceOverlay, '--platform', 'windows-wsl') -LogSuccess
     if ($GuidanceResult.Status -ne 0) { exit 1 }
 
     foreach ($Entry in $Repositories) {

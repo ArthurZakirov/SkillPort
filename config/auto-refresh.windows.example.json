@@ -2,7 +2,7 @@
   "Version": 1,
   "Environment": {
     "SKILLPORT_ROOT": "<absolute-windows-skillport-path>",
-    "PRIVATE_CONTEXT_ROOT": "<absolute-windows-private-context-path>",
+    "AGENTDESK_ROOT": "<absolute-windows-AgentDesk-path>",
     "SKILLPORT_STATE_DIR": "<absolute-windows-state-path>",
     "SKILLPORT_GIT_BIN": "<absolute-git-executable-path>",
     "SKILLPORT_NODE_BIN": "<absolute-node-executable-path>",

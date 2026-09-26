@@ -10,10 +10,10 @@
       "skills": true
     },
     {
-      "name": "PrivateContext",
-      "source": "owner/private-context",
+      "name": "SelfSource",
+      "source": "owner/self-source",
       "role": "Private synchronized guidance, registry, and nonpublic context.",
-      "checkout": { "kind": "private-context-root" },
+      "checkout": { "kind": "skillport-sibling", "directory": "self-source" },
       "refresh": true,
       "skills": false
     },

@@ -12,10 +12,10 @@ PUBLIC_FILES = REFRESH + "\n" + INSTALLER + "\n" + (ROOT / "config" / "auto-refr
 class WindowsAutoRefreshContractTests(unittest.TestCase):
     def test_portable_environment_contract(self):
         self.assertIn("SKILLPORT_ROOT", PUBLIC_FILES)
-        self.assertIn("PRIVATE_CONTEXT_ROOT", PUBLIC_FILES)
+        self.assertNotIn("PRIVATE_CONTEXT_ROOT", PUBLIC_FILES)
         rejected_alias = "SKILLPORT_PRIVATE_" + "CONTEXT_ROOT"
         self.assertNotIn(rejected_alias, PUBLIC_FILES)
-        self.assertIn("skillport\\repositories.json", REFRESH)
+        self.assertIn("global-guidance\\agents-md-references\\repositories.json", REFRESH)
         self.assertIn("global-guidance\\common.md", REFRESH)
         self.assertIn("global-guidance\\windows-wsl.md", REFRESH)
         self.assertIn("Read-RepositoryRegistry", REFRESH)

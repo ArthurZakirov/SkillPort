@@ -59,7 +59,7 @@ AgentDesk owns the canonical global guidance under `global-guidance/` and the `s
 
 Do not rely on a bare `@` line as a Codex import. Claude receives two native imports and OpenCode receives the two paths in its `instructions` array while unrelated settings are preserved. Paths containing spaces are supported. `npx skills` does not distribute arbitrary global instruction files, and running Codex sessions still need a restart to adopt a changed `AGENTS.md` chain.
 
-Store one structured private registry at `$PRIVATE_CONTEXT_ROOT/skillport/repositories.json`; see `config/repositories.example.json`. Every entry has one logical role, portable checkout kind, refresh flag, and skill-install flag. The updater derives `skillport-root`, `private-context-root`, and sibling checkout paths from the two machine roots. The same registry drives safe Git refresh, the exact remote skill subset, and the generated human-readable repository-role overview. Do not maintain separate checkout and skill-repository inventories.
+Store one structured registry at `AgentDesk/global-guidance/agents-md-references/repositories.json`. Every entry has one logical role, portable checkout kind, refresh flag, and skill-install flag. The updater derives `skillport-root` and sibling checkout paths from `SKILLPORT_ROOT`; AgentDesk is the sibling checkout that owns the registry. The same registry drives safe Git refresh and the exact remote skill subset. Do not maintain separate checkout and skill-repository inventories.
 
 References: [Codex global instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude memory and imports](https://code.claude.com/docs/en/memory).
 
@@ -72,7 +72,7 @@ Keep the real config outside the public repository. A synchronized private repos
 Set machine-local paths through task-specific environment variables. Do not put a device's concrete checkout paths in public files or rely on interactive shell startup files:
 
 - `SKILLPORT_ROOT`: the SkillPort checkout on the current machine.
-- `PRIVATE_CONTEXT_ROOT`: the cross-tool private context checkout on the current machine. The updater derives the repository registry and both private guidance layers from this root.
+- `AGENTDESK_ROOT`: the AgentDesk checkout on the current machine. If omitted where supported, it defaults to the `AgentDesk` sibling of `SKILLPORT_ROOT`. AgentDesk owns both global guidance and the repository registry.
 - `SKILLPORT_AUTO_REFRESH_CONFIG`, `SKILLPORT_STATE_DIR`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, and `SKILLPORT_PYTHON_BIN`: the machine-local policy file, state directory, and exact core executable entrypoints supplied to the LaunchAgent.
 - `SKILLPORT_GH_BIN`: an optional GitHub CLI executable used only to verify live repository visibility before an opted-in push. It is not a dependency of fetch, fast-forward, registry processing, guidance composition, or skill installation.
 
@@ -95,11 +95,11 @@ Codex guidance and skills have different reload behavior. Codex constructs its `
 
 ## Automatic Windows refresh
 
-`scripts/install-windows-auto-refresh.ps1` creates a permission-restricted JSON machine config and registers a current-user Task Scheduler task. Run the installer from native Windows PowerShell with `SKILLPORT_ROOT` and `PRIVATE_CONTEXT_ROOT` set to that machine's native checkout paths. It discovers or accepts explicit `SKILLPORT_GIT_BIN`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, and `SKILLPORT_POWERSHELL_BIN` paths, then records the required runtime values in the local config. `SKILLPORT_GH_BIN` is recorded when discoverable but remains optional for the core updater. Concrete device paths never belong in the public repository or synchronized guidance.
+`scripts/install-windows-auto-refresh.ps1` creates a permission-restricted JSON machine config and registers a current-user Task Scheduler task. Run the installer from native Windows PowerShell with `SKILLPORT_ROOT` set to that machine's native checkout path; `AGENTDESK_ROOT` may be supplied explicitly when AgentDesk is not the default sibling checkout. It discovers or accepts explicit `SKILLPORT_GIT_BIN`, `SKILLPORT_NODE_BIN`, `SKILLPORT_NPX_BIN`, `SKILLPORT_PYTHON_BIN`, and `SKILLPORT_POWERSHELL_BIN` paths, then records the required runtime values in the local config. `SKILLPORT_GH_BIN` is recorded when discoverable but remains optional for the core updater. Concrete device paths never belong in the public repository or synchronized guidance.
 
 ```powershell
 $env:SKILLPORT_ROOT = '<absolute-windows-skillport-checkout>'
-$env:PRIVATE_CONTEXT_ROOT = '<absolute-windows-private-context-checkout>'
+$env:AGENTDESK_ROOT = '<absolute-windows-AgentDesk-checkout>'
 & "$env:SKILLPORT_ROOT\scripts\install-windows-auto-refresh.ps1" -ReplaceExisting
 ```
 

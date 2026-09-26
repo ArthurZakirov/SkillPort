@@ -18,10 +18,8 @@ function Stop-WithMessage {
 
 if ($env:OS -ne 'Windows_NT') { Stop-WithMessage 'Windows is required' }
 $SkillPortRoot = [string]$env:SKILLPORT_ROOT
-$PrivateContextRoot = [string]$env:PRIVATE_CONTEXT_ROOT
 foreach ($Entry in @{
     SKILLPORT_ROOT = $SkillPortRoot
-    PRIVATE_CONTEXT_ROOT = $PrivateContextRoot
 }.GetEnumerator()) {
     if ([string]::IsNullOrWhiteSpace($Entry.Value)) { Stop-WithMessage "required environment variable $($Entry.Key) is unset" }
     if (-not [IO.Path]::IsPathRooted($Entry.Value)) { Stop-WithMessage "$($Entry.Key) must be an absolute Windows path" }
@@ -68,7 +66,7 @@ foreach ($PathEntry in @($StateDirectory, $ConfigPath)) {
 
 $RefreshScript = Join-Path $SkillPortRoot 'scripts\skillport-auto-refresh.ps1'
 $AgentDeskRoot = if ([string]::IsNullOrWhiteSpace($env:AGENTDESK_ROOT)) { Join-Path (Split-Path -Parent $SkillPortRoot) 'AgentDesk' } else { $env:AGENTDESK_ROOT }
-$RegistryPath = Join-Path $PrivateContextRoot 'skillport\repositories.json'
+$RegistryPath = Join-Path $AgentDeskRoot 'global-guidance\agents-md-references\repositories.json'
 $GuidanceCommon = Join-Path $AgentDeskRoot 'global-guidance\common.md'
 $GuidanceOverlay = Join-Path $AgentDeskRoot 'global-guidance\windows-wsl.md'
 foreach ($RequiredPath in @($RefreshScript, $RegistryPath, $GuidanceCommon, $GuidanceOverlay)) {
@@ -88,7 +86,7 @@ $MachineConfig = [ordered]@{
     Version = 1
     Environment = [ordered]@{
         SKILLPORT_ROOT = $SkillPortRoot
-        PRIVATE_CONTEXT_ROOT = $PrivateContextRoot
+        AGENTDESK_ROOT = $AgentDeskRoot
         SKILLPORT_STATE_DIR = $StateDirectory
         SKILLPORT_GIT_BIN = $GitBin
         SKILLPORT_NODE_BIN = $NodeBin
@@ -141,7 +139,6 @@ $GuidanceArguments = @(
     '--common', $GuidanceCommon,
     '--overlay', $GuidanceOverlay,
     '--platform', 'windows-wsl',
-    '--registry', $RegistryPath,
     '--dry-run'
 )
 if ($ReplaceExisting) { $GuidanceArguments += '--replace-existing' }
@@ -172,7 +169,6 @@ $GuidanceArguments = @(
     '--common', $GuidanceCommon,
     '--overlay', $GuidanceOverlay,
     '--platform', 'windows-wsl',
-    '--registry', $RegistryPath
 )
 if ($ReplaceExisting) { $GuidanceArguments += '--replace-existing' }
 & $PythonBin @GuidanceArguments | Out-Null

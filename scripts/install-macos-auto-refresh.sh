@@ -2,7 +2,6 @@
 set -e
 
 SKILLPORT_ROOT="${SKILLPORT_ROOT:-}"
-PRIVATE_CONTEXT_ROOT="${PRIVATE_CONTEXT_ROOT:-}"
 SKILLPORT_NODE_BIN="${SKILLPORT_NODE_BIN:-}"
 SKILLPORT_NPX_BIN="${SKILLPORT_NPX_BIN:-}"
 SKILLPORT_PYTHON_BIN="${SKILLPORT_PYTHON_BIN:-}"
@@ -18,11 +17,10 @@ REPLACE=0
 
 usage() {
   cat <<'EOF'
-Usage: SKILLPORT_ROOT=<path> PRIVATE_CONTEXT_ROOT=<path> install-macos-auto-refresh.sh [options]
+Usage: SKILLPORT_ROOT=<path> install-macos-auto-refresh.sh [options]
 
 Required environment:
   SKILLPORT_ROOT                 SkillPort checkout on this machine.
-  PRIVATE_CONTEXT_ROOT           Cross-tool private context checkout.
 
 Optional:
   --push-private-repo <path>  Repeatable private-repository push opt-in.
@@ -55,14 +53,13 @@ SKILLPORT_NPX_BIN="${SKILLPORT_NPX_BIN:-$(command -v npx || true)}"
 SKILLPORT_PYTHON_BIN="${SKILLPORT_PYTHON_BIN:-$(command -v python3 || true)}"
 SKILLPORT_GH_BIN="${SKILLPORT_GH_BIN:-$(command -v gh || true)}"
 AGENTDESK_ROOT="${AGENTDESK_ROOT:-$(/usr/bin/dirname "$SKILLPORT_ROOT")/AgentDesk}"
-SKILLPORT_REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
+SKILLPORT_REGISTRY_FILE="$AGENTDESK_ROOT/global-guidance/agents-md-references/repositories.json"
 SKILLPORT_GUIDANCE_COMMON="$AGENTDESK_ROOT/global-guidance/common.md"
 SKILLPORT_GUIDANCE_OVERLAY="$AGENTDESK_ROOT/global-guidance/macos.md"
 
-for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_CONFIG SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
+for required_name in SKILLPORT_ROOT SKILLPORT_AUTO_REFRESH_CONFIG SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
   case "$required_name" in
     SKILLPORT_ROOT) required_path="$SKILLPORT_ROOT";;
-    PRIVATE_CONTEXT_ROOT) required_path="$PRIVATE_CONTEXT_ROOT";;
     SKILLPORT_AUTO_REFRESH_CONFIG) required_path="$CONFIG_FILE";;
     SKILLPORT_STATE_DIR) required_path="$SKILLPORT_STATE_DIR";;
     SKILLPORT_NODE_BIN) required_path="$SKILLPORT_NODE_BIN";;
@@ -73,7 +70,6 @@ for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_
   case "$required_path" in /*) ;; *) printf 'install-macos-auto-refresh: %s must be an absolute POSIX path\n' "$required_name" >&2; exit 2;; esac
 done
 [ -x "$SKILLPORT_ROOT/scripts/skillport-auto-refresh.sh" ] || { printf 'install-macos-auto-refresh: refresh script is not executable\n' >&2; exit 2; }
-[ -d "$PRIVATE_CONTEXT_ROOT/.git" ] || { printf 'install-macos-auto-refresh: private context repository is invalid\n' >&2; exit 2; }
 for private_input in "$SKILLPORT_REGISTRY_FILE" "$SKILLPORT_GUIDANCE_COMMON" "$SKILLPORT_GUIDANCE_OVERLAY"; do
   [ -f "$private_input" ] || { printf 'install-macos-auto-refresh: a derived private input is missing\n' >&2; exit 2; }
 done
@@ -112,7 +108,7 @@ TEMP_PLIST="$TEMP_DIR/job.plist"
 refresh_script_xml=$(escape_xml "$SKILLPORT_ROOT/scripts/skillport-auto-refresh.sh")
 config_file_xml=$(escape_xml "$CONFIG_FILE")
 skillport_root_xml=$(escape_xml "$SKILLPORT_ROOT")
-private_context_root_xml=$(escape_xml "$PRIVATE_CONTEXT_ROOT")
+agentdesk_root_xml=$(escape_xml "$AGENTDESK_ROOT")
 state_dir_xml=$(escape_xml "$SKILLPORT_STATE_DIR")
 node_bin_xml=$(escape_xml "$SKILLPORT_NODE_BIN")
 npx_bin_xml=$(escape_xml "$SKILLPORT_NPX_BIN")
@@ -151,8 +147,8 @@ cat > "$TEMP_PLIST" <<EOF
   <dict>
     <key>SKILLPORT_ROOT</key>
     <string>${skillport_root_xml}</string>
-    <key>PRIVATE_CONTEXT_ROOT</key>
-    <string>${private_context_root_xml}</string>
+    <key>AGENTDESK_ROOT</key>
+    <string>${agentdesk_root_xml}</string>
     <key>SKILLPORT_AUTO_REFRESH_CONFIG</key>
     <string>${config_file_xml}</string>
     <key>SKILLPORT_STATE_DIR</key>
@@ -172,7 +168,7 @@ EOF
 
 /usr/bin/plutil -lint "$TEMP_PLIST" >/dev/null
 
-guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos --registry "$SKILLPORT_REGISTRY_FILE" --dry-run)
+guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos --dry-run)
 [ "$REPLACE" -eq 0 ] || guidance_args+=(--replace-existing)
 "$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" "${guidance_args[@]}" >/dev/null
 
@@ -194,7 +190,7 @@ printf 'Schedule: login/load and quarter-hour calendar intervals (wake-coalesced
 /usr/bin/install -m 600 "$TEMP_CONFIG" "$CONFIG_FILE"
 /usr/bin/install -m 644 "$TEMP_PLIST" "$PLIST_FILE"
 /bin/chmod 700 "$SKILLPORT_STATE_DIR"
-guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos --registry "$SKILLPORT_REGISTRY_FILE")
+guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos)
 [ "$REPLACE" -eq 0 ] || guidance_args+=(--replace-existing)
 "$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" "${guidance_args[@]}" >/dev/null
 

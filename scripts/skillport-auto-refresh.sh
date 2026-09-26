@@ -9,7 +9,7 @@ usage() {
   cat <<'EOF'
 Usage: skillport-auto-refresh.sh [--config <absolute-path>]
 
-Requires SKILLPORT_ROOT, PRIVATE_CONTEXT_ROOT,
+Requires SKILLPORT_ROOT, AGENTDESK_ROOT,
 SKILLPORT_STATE_DIR, SKILLPORT_NODE_BIN, SKILLPORT_NPX_BIN,
 and SKILLPORT_PYTHON_BIN in the environment. SKILLPORT_GH_BIN is optional;
 without verified GitHub metadata, pushes are skipped while refresh continues.
@@ -87,10 +87,10 @@ while IFS= read -r raw_line || [ -n "$raw_line" ]; do
   esac
 done < "$CONFIG_FILE"
 
-for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
+for required_name in SKILLPORT_ROOT AGENTDESK_ROOT SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
   case "$required_name" in
     SKILLPORT_ROOT) required_value="${SKILLPORT_ROOT:-}";;
-    PRIVATE_CONTEXT_ROOT) required_value="${PRIVATE_CONTEXT_ROOT:-}";;
+    AGENTDESK_ROOT) required_value="${AGENTDESK_ROOT:-}";;
     SKILLPORT_STATE_DIR) required_value="${SKILLPORT_STATE_DIR:-}";;
     SKILLPORT_NODE_BIN) required_value="${SKILLPORT_NODE_BIN:-}";;
     SKILLPORT_NPX_BIN) required_value="${SKILLPORT_NPX_BIN:-}";;
@@ -111,7 +111,7 @@ if [ -n "${SKILLPORT_GH_BIN:-}" ]; then
 fi
 
 AGENTDESK_ROOT="${AGENTDESK_ROOT:-$(/usr/bin/dirname "$SKILLPORT_ROOT")/AgentDesk}"
-REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
+REGISTRY_FILE="$AGENTDESK_ROOT/global-guidance/agents-md-references/repositories.json"
 GUIDANCE_COMMON="$AGENTDESK_ROOT/global-guidance/common.md"
 GUIDANCE_OVERLAY="$AGENTDESK_ROOT/global-guidance/macos.md"
 GUIDANCE_REPO="$AGENTDESK_ROOT"
@@ -408,13 +408,12 @@ fi
 CHECKOUTS_FILE="$RUN_DIR/checkouts.tsv"
 write_registry_view checkouts "$CHECKOUTS_FILE" || exit 1
 skillport_parent=$(/usr/bin/dirname "$SKILLPORT_ROOT")
-KNOWN_REPO_PATHS=("$SKILLPORT_ROOT" "$PRIVATE_CONTEXT_ROOT")
+KNOWN_REPO_PATHS=("$SKILLPORT_ROOT" "$AGENTDESK_ROOT")
 REGISTRY_PATHS_FILE="$RUN_DIR/registry-paths.tsv"
 write_registry_view paths "$REGISTRY_PATHS_FILE" || exit 1
 while IFS=$'\t' read -r registry_name checkout_kind checkout_directory || [ -n "$registry_name" ]; do
   case "$checkout_kind" in
     skillport-root) registry_path="$SKILLPORT_ROOT";;
-    private-context-root) registry_path="$PRIVATE_CONTEXT_ROOT";;
     skillport-sibling) registry_path="$skillport_parent/$checkout_directory";;
     *) continue;;
   esac
@@ -423,11 +422,10 @@ done < "$REGISTRY_PATHS_FILE"
 while IFS=$'\t' read -r registry_name checkout_kind checkout_directory || [ -n "$registry_name" ]; do
   case "$checkout_kind" in
     skillport-root) checkout_path="$SKILLPORT_ROOT";;
-    private-context-root) checkout_path="$PRIVATE_CONTEXT_ROOT";;
     skillport-sibling) checkout_path="$skillport_parent/$checkout_directory";;
     *) log "ERROR repo=$registry_name unsupported_checkout_kind"; continue;;
   esac
-  if [ "$checkout_path" = "$SKILLPORT_ROOT" ] || [ "$checkout_path" = "$PRIVATE_CONTEXT_ROOT" ]; then
+  if [ "$checkout_path" = "$SKILLPORT_ROOT" ] || [ "$checkout_path" = "$AGENTDESK_ROOT" ]; then
     continue
   fi
   if [ ! -e "$checkout_path/.git" ]; then
@@ -451,7 +449,7 @@ for public_spec in "${PUSH_PUBLIC_REPOS[@]}"; do
   esac
 done
 
-run_quiet 'global_guidance refresh' "$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" --common "$GUIDANCE_COMMON" --overlay "$GUIDANCE_OVERLAY" --platform macos --registry "$REGISTRY_FILE" || exit 1
+run_quiet 'global_guidance refresh' "$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" --common "$GUIDANCE_COMMON" --overlay "$GUIDANCE_OVERLAY" --platform macos || exit 1
 SKILL_REPOS_FILE="$RUN_DIR/skill-repos.txt"
 write_registry_view skills "$SKILL_REPOS_FILE" || exit 1
 run_quiet 'global_skills synchronize' /usr/bin/env SKILLPORT_NODE_BIN="$SKILLPORT_NODE_BIN" SKILLPORT_NPX_BIN="$SKILLPORT_NPX_BIN" "$SKILLPORT_ROOT/scripts/skillport-sync.sh" --repos-file "$SKILL_REPOS_FILE" --skip-update || exit 1

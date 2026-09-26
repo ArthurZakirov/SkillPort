@@ -10,7 +10,7 @@ import re
 
 NAME = re.compile(r"^[A-Za-z0-9._-]+$")
 SOURCE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-CHECKOUT_KINDS = {"skillport-root", "private-context-root", "skillport-sibling", "none"}
+CHECKOUT_KINDS = {"skillport-root", "skillport-sibling", "none"}
 
 
 def load_registry(path: Path) -> list[dict]:

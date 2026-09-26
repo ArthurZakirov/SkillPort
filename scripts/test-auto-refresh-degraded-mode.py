@@ -53,7 +53,7 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             sync.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
             sync.chmod(0o755)
             guidance = agentdesk / "global-guidance"
-            registry = private / "skillport"
+            registry = guidance / "agents-md-references"
             guidance.mkdir()
             registry.mkdir()
             (guidance / "common.md").write_text("common\n", encoding="utf-8")
@@ -65,9 +65,6 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             run("git", "push", cwd=agentdesk)
             run("git", "commit", "-m", "Add updater fixtures", cwd=skillport)
             run("git", "push", cwd=skillport)
-            run("git", "add", "skillport", cwd=private)
-            run("git", "commit", "-m", "Add private fixtures", cwd=private)
-            run("git", "push", cwd=private)
             (skillport / "payload.txt").write_text("reviewed generic change\n", encoding="utf-8")
             run("git", "add", "payload.txt", cwd=skillport)
             run("git", "commit", "-m", "Ahead change", cwd=skillport)
@@ -91,7 +88,7 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             environment = {
                 "HOME": str(root / "home"),
                 "SKILLPORT_ROOT": str(skillport),
-                "PRIVATE_CONTEXT_ROOT": str(private),
+                "AGENTDESK_ROOT": str(agentdesk),
                 "SKILLPORT_AUTO_REFRESH_CONFIG": str(config),
                 "SKILLPORT_STATE_DIR": str(state),
                 "SKILLPORT_NODE_BIN": str(fake_node),
