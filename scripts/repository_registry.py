@@ -49,7 +49,7 @@ def load_registry(path: Path) -> list[dict]:
 
 
 def render_overview(repositories: list[dict]) -> str:
-    lines = ["## Repository roles", ""]
+    lines = ["<a id=\"repository-roles\"></a>", "## 🗺️ Repository roles", ""]
     lines.extend(f"- **{entry['name']}**: {entry['role']}" for entry in repositories)
     lines.extend([
         "",

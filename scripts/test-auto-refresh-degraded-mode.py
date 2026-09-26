@@ -37,10 +37,13 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             root = Path(temporary)
             skillport = initialize_checkout(root, "SkillPort")
             private = initialize_checkout(root, "PrivateContext")
+            agentdesk = initialize_checkout(root, "AgentDesk")
             scripts = skillport / "scripts"
             scripts.mkdir()
             shutil.copy2(REFRESH_SCRIPT, scripts / REFRESH_SCRIPT.name)
-            (scripts / "bootstrap-agent-guidance.py").write_text("raise SystemExit(0)\n", encoding="utf-8")
+            agentdesk_scripts = agentdesk / "scripts"
+            agentdesk_scripts.mkdir()
+            (agentdesk_scripts / "bootstrap-agents-md.py").write_text("raise SystemExit(0)\n", encoding="utf-8")
             (scripts / "repository_registry.py").write_text(textwrap.dedent("""
                 import sys
                 if sys.argv[2] == "skills":
@@ -49,7 +52,7 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             sync = scripts / "skillport-sync.sh"
             sync.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
             sync.chmod(0o755)
-            guidance = private / "agent-guidance"
+            guidance = agentdesk / "global-guidance"
             registry = private / "skillport"
             guidance.mkdir()
             registry.mkdir()
@@ -57,9 +60,12 @@ class AutoRefreshDegradedModeTests(unittest.TestCase):
             (guidance / "macos.md").write_text("macos\n", encoding="utf-8")
             (registry / "repositories.json").write_text('{"version":1,"repositories":[]}\n', encoding="utf-8")
             run("git", "add", "scripts", cwd=skillport)
+            run("git", "add", "scripts", "global-guidance", cwd=agentdesk)
+            run("git", "commit", "-m", "Add AgentDesk fixtures", cwd=agentdesk)
+            run("git", "push", cwd=agentdesk)
             run("git", "commit", "-m", "Add updater fixtures", cwd=skillport)
             run("git", "push", cwd=skillport)
-            run("git", "add", "agent-guidance", "skillport", cwd=private)
+            run("git", "add", "skillport", cwd=private)
             run("git", "commit", "-m", "Add private fixtures", cwd=private)
             run("git", "push", cwd=private)
             (skillport / "payload.txt").write_text("reviewed generic change\n", encoding="utf-8")

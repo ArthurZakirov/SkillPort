@@ -54,9 +54,10 @@ SKILLPORT_NODE_BIN="${SKILLPORT_NODE_BIN:-$(command -v node || true)}"
 SKILLPORT_NPX_BIN="${SKILLPORT_NPX_BIN:-$(command -v npx || true)}"
 SKILLPORT_PYTHON_BIN="${SKILLPORT_PYTHON_BIN:-$(command -v python3 || true)}"
 SKILLPORT_GH_BIN="${SKILLPORT_GH_BIN:-$(command -v gh || true)}"
+AGENTDESK_ROOT="${AGENTDESK_ROOT:-$(/usr/bin/dirname "$SKILLPORT_ROOT")/AgentDesk}"
 SKILLPORT_REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
-SKILLPORT_GUIDANCE_COMMON="$PRIVATE_CONTEXT_ROOT/agent-guidance/common.md"
-SKILLPORT_GUIDANCE_OVERLAY="$PRIVATE_CONTEXT_ROOT/agent-guidance/macos.md"
+SKILLPORT_GUIDANCE_COMMON="$AGENTDESK_ROOT/global-guidance/common.md"
+SKILLPORT_GUIDANCE_OVERLAY="$AGENTDESK_ROOT/global-guidance/macos.md"
 
 for required_name in SKILLPORT_ROOT PRIVATE_CONTEXT_ROOT SKILLPORT_AUTO_REFRESH_CONFIG SKILLPORT_STATE_DIR SKILLPORT_NODE_BIN SKILLPORT_NPX_BIN SKILLPORT_PYTHON_BIN; do
   case "$required_name" in
@@ -173,7 +174,7 @@ EOF
 
 guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos --registry "$SKILLPORT_REGISTRY_FILE" --dry-run)
 [ "$REPLACE" -eq 0 ] || guidance_args+=(--replace-existing)
-"$SKILLPORT_PYTHON_BIN" "$SKILLPORT_ROOT/scripts/bootstrap-agent-guidance.py" "${guidance_args[@]}" >/dev/null
+"$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" "${guidance_args[@]}" >/dev/null
 
 for destination in "$CONFIG_FILE" "$PLIST_FILE"; do
   source_file="$TEMP_CONFIG"
@@ -195,7 +196,7 @@ printf 'Schedule: login/load and quarter-hour calendar intervals (wake-coalesced
 /bin/chmod 700 "$SKILLPORT_STATE_DIR"
 guidance_args=(--common "$SKILLPORT_GUIDANCE_COMMON" --overlay "$SKILLPORT_GUIDANCE_OVERLAY" --platform macos --registry "$SKILLPORT_REGISTRY_FILE")
 [ "$REPLACE" -eq 0 ] || guidance_args+=(--replace-existing)
-"$SKILLPORT_PYTHON_BIN" "$SKILLPORT_ROOT/scripts/bootstrap-agent-guidance.py" "${guidance_args[@]}" >/dev/null
+"$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" "${guidance_args[@]}" >/dev/null
 
 domain="gui/$(/usr/bin/id -u)"
 if /bin/launchctl print "$domain/com.skillport.auto-refresh" >/dev/null 2>&1; then

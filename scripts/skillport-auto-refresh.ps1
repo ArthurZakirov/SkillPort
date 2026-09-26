@@ -60,9 +60,10 @@ $NodeBin = $env:SKILLPORT_NODE_BIN
 $NpxBin = $env:SKILLPORT_NPX_BIN
 $PythonBin = $env:SKILLPORT_PYTHON_BIN
 $GhBin = $ConfiguredGh
+$AgentDeskRoot = if ([string]::IsNullOrWhiteSpace($env:AGENTDESK_ROOT)) { Join-Path (Split-Path -Parent $SkillPortRoot) 'AgentDesk' } else { $env:AGENTDESK_ROOT }
 $RegistryPath = Join-Path $PrivateContextRoot 'skillport\repositories.json'
-$GuidanceCommon = Join-Path $PrivateContextRoot 'agent-guidance\common.md'
-$GuidanceOverlay = Join-Path $PrivateContextRoot 'agent-guidance\windows-wsl.md'
+$GuidanceCommon = Join-Path $AgentDeskRoot 'global-guidance\common.md'
+$GuidanceOverlay = Join-Path $AgentDeskRoot 'global-guidance\windows-wsl.md'
 
 foreach ($Executable in @($GitBin, $NodeBin, $NpxBin, $PythonBin)) {
     if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) {
@@ -70,7 +71,7 @@ foreach ($Executable in @($GitBin, $NodeBin, $NpxBin, $PythonBin)) {
     }
 }
 foreach ($RequiredFile in @(
-    (Join-Path $SkillPortRoot 'scripts\bootstrap-agent-guidance.py'),
+    (Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'),
     $RegistryPath,
     $GuidanceCommon,
     $GuidanceOverlay
@@ -351,7 +352,7 @@ try {
         Push-SafeRepository ([string]$Entry.Path) 'PUBLIC' ([string]$Entry.ApprovedHead)
     }
 
-    $GuidanceResult = Invoke-Captured -Label 'global_guidance refresh' -FilePath $PythonBin -Arguments @((Join-Path $SkillPortRoot 'scripts\bootstrap-agent-guidance.py'), '--common', $GuidanceCommon, '--overlay', $GuidanceOverlay, '--platform', 'windows-wsl', '--registry', $RegistryPath) -LogSuccess
+    $GuidanceResult = Invoke-Captured -Label 'global_guidance refresh' -FilePath $PythonBin -Arguments @((Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'), '--common', $GuidanceCommon, '--overlay', $GuidanceOverlay, '--platform', 'windows-wsl', '--registry', $RegistryPath) -LogSuccess
     if ($GuidanceResult.Status -ne 0) { exit 1 }
 
     foreach ($Entry in $Repositories) {

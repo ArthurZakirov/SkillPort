@@ -16,8 +16,8 @@ class WindowsAutoRefreshContractTests(unittest.TestCase):
         rejected_alias = "SKILLPORT_PRIVATE_" + "CONTEXT_ROOT"
         self.assertNotIn(rejected_alias, PUBLIC_FILES)
         self.assertIn("skillport\\repositories.json", REFRESH)
-        self.assertIn("agent-guidance\\common.md", REFRESH)
-        self.assertIn("agent-guidance\\windows-wsl.md", REFRESH)
+        self.assertIn("global-guidance\\common.md", REFRESH)
+        self.assertIn("global-guidance\\windows-wsl.md", REFRESH)
         self.assertIn("Read-RepositoryRegistry", REFRESH)
 
     def test_task_scheduler_catch_up_contract(self):

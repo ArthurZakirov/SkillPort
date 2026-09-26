@@ -67,9 +67,10 @@ foreach ($PathEntry in @($StateDirectory, $ConfigPath)) {
 }
 
 $RefreshScript = Join-Path $SkillPortRoot 'scripts\skillport-auto-refresh.ps1'
+$AgentDeskRoot = if ([string]::IsNullOrWhiteSpace($env:AGENTDESK_ROOT)) { Join-Path (Split-Path -Parent $SkillPortRoot) 'AgentDesk' } else { $env:AGENTDESK_ROOT }
 $RegistryPath = Join-Path $PrivateContextRoot 'skillport\repositories.json'
-$GuidanceCommon = Join-Path $PrivateContextRoot 'agent-guidance\common.md'
-$GuidanceOverlay = Join-Path $PrivateContextRoot 'agent-guidance\windows-wsl.md'
+$GuidanceCommon = Join-Path $AgentDeskRoot 'global-guidance\common.md'
+$GuidanceOverlay = Join-Path $AgentDeskRoot 'global-guidance\windows-wsl.md'
 foreach ($RequiredPath in @($RefreshScript, $RegistryPath, $GuidanceCommon, $GuidanceOverlay)) {
     if (-not (Test-Path -LiteralPath $RequiredPath -PathType Leaf)) { Stop-WithMessage 'a derived SkillPort input is missing' }
 }
@@ -136,7 +137,7 @@ if ($null -ne $ExistingTask -and -not $ReplaceExisting) { Stop-WithMessage 'the 
 if ((Test-Path -LiteralPath $ConfigPath) -and -not $ReplaceExisting) { Stop-WithMessage 'the machine config already exists; reconcile it or use -ReplaceExisting' }
 
 $GuidanceArguments = @(
-    (Join-Path $SkillPortRoot 'scripts\bootstrap-agent-guidance.py'),
+    (Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'),
     '--common', $GuidanceCommon,
     '--overlay', $GuidanceOverlay,
     '--platform', 'windows-wsl',
@@ -167,7 +168,7 @@ $FileAcl.AddAccessRule($FileRule)
 Set-Acl -LiteralPath $ConfigPath -AclObject $FileAcl
 
 $GuidanceArguments = @(
-    (Join-Path $SkillPortRoot 'scripts\bootstrap-agent-guidance.py'),
+    (Join-Path $AgentDeskRoot 'scripts\bootstrap-agents-md.py'),
     '--common', $GuidanceCommon,
     '--overlay', $GuidanceOverlay,
     '--platform', 'windows-wsl',

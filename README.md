@@ -112,7 +112,7 @@ This is intentionally different from local per-repo symlinking. Use `skillport-s
 
 See [cross-device maintenance](docs/cross-device-maintenance.md) for Windows commands, source-versus-install rules, safe migration of existing copies, and private-context handling.
 
-That guide also covers one Windows-hosted checkout shared with WSL, installing for Codex, Claude Code and OpenCode, and `scripts/bootstrap-agent-guidance.py` for layered global rules.
+That guide also covers one Windows-hosted checkout shared with WSL, installing for Codex, Claude Code and OpenCode, and AgentDesk's `scripts/bootstrap-agents-md.py` for layered global rules.
 
 Useful variants:
 
@@ -177,7 +177,6 @@ Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVAT
 ├── commands/
 │   └── list-skills.md
 ├── scripts/
-│   ├── bootstrap-agent-guidance.py
 │   ├── create-agent-skill-repo.sh
 │   ├── create-claude-command.sh
 │   ├── create-shared-skill.sh
@@ -191,7 +190,6 @@ Machine-local paths are supplied explicitly through `SKILLPORT_ROOT` and `PRIVAT
 │   ├── skillport-auto-refresh.sh
 │   ├── skillport-sync.sh
 │   ├── test-auto-refresh-degraded-mode.py
-│   ├── test-bootstrap-agent-guidance.py
 │   ├── test-repository-registry.py
 │   ├── test-windows-auto-refresh.py
 │   └── update-readme.sh

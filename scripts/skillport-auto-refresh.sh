@@ -110,10 +110,11 @@ if [ -n "${SKILLPORT_GH_BIN:-}" ]; then
   case "$SKILLPORT_GH_BIN" in /*) ;; *) printf 'skillport-auto-refresh: SKILLPORT_GH_BIN must be an absolute POSIX path\n' >&2; exit 2;; esac
 fi
 
+AGENTDESK_ROOT="${AGENTDESK_ROOT:-$(/usr/bin/dirname "$SKILLPORT_ROOT")/AgentDesk}"
 REGISTRY_FILE="$PRIVATE_CONTEXT_ROOT/skillport/repositories.json"
-GUIDANCE_COMMON="$PRIVATE_CONTEXT_ROOT/agent-guidance/common.md"
-GUIDANCE_OVERLAY="$PRIVATE_CONTEXT_ROOT/agent-guidance/macos.md"
-GUIDANCE_REPO="$PRIVATE_CONTEXT_ROOT"
+GUIDANCE_COMMON="$AGENTDESK_ROOT/global-guidance/common.md"
+GUIDANCE_OVERLAY="$AGENTDESK_ROOT/global-guidance/macos.md"
+GUIDANCE_REPO="$AGENTDESK_ROOT"
 for derived_name in REGISTRY_FILE GUIDANCE_COMMON GUIDANCE_OVERLAY; do
   case "$derived_name" in REGISTRY_FILE) derived_value="$REGISTRY_FILE";; GUIDANCE_COMMON) derived_value="$GUIDANCE_COMMON";; GUIDANCE_OVERLAY) derived_value="$GUIDANCE_OVERLAY";; esac
   case "$derived_value" in /*) ;; *) printf 'skillport-auto-refresh: derived paths must be absolute POSIX paths\n' >&2; exit 2;; esac
@@ -450,7 +451,7 @@ for public_spec in "${PUSH_PUBLIC_REPOS[@]}"; do
   esac
 done
 
-run_quiet 'global_guidance refresh' "$SKILLPORT_PYTHON_BIN" "$SKILLPORT_ROOT/scripts/bootstrap-agent-guidance.py" --common "$GUIDANCE_COMMON" --overlay "$GUIDANCE_OVERLAY" --platform macos --registry "$REGISTRY_FILE" || exit 1
+run_quiet 'global_guidance refresh' "$SKILLPORT_PYTHON_BIN" "$AGENTDESK_ROOT/scripts/bootstrap-agents-md.py" --common "$GUIDANCE_COMMON" --overlay "$GUIDANCE_OVERLAY" --platform macos --registry "$REGISTRY_FILE" || exit 1
 SKILL_REPOS_FILE="$RUN_DIR/skill-repos.txt"
 write_registry_view skills "$SKILL_REPOS_FILE" || exit 1
 run_quiet 'global_skills synchronize' /usr/bin/env SKILLPORT_NODE_BIN="$SKILLPORT_NODE_BIN" SKILLPORT_NPX_BIN="$SKILLPORT_NPX_BIN" "$SKILLPORT_ROOT/scripts/skillport-sync.sh" --repos-file "$SKILL_REPOS_FILE" --skip-update || exit 1
