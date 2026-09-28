@@ -141,6 +141,16 @@ Machine-local paths are anchored by `SKILLPORT_ROOT` and, when needed, `AGENTDES
 | `skillport-distribution-system` | Use when packaging, publishing, or updating a public agent-skill repository so it can be installed across machines, repos and harnesses including Codex, Claude Code and OpenCode, using shared local skill storage. |
 <!-- END GENERATED SECTION: skills -->
 
+## Local Skill Catalog
+
+Use SkillPort as a stable discovery layer over the installed `skills` CLI:
+
+```bash
+./scripts/skillport catalog --json
+```
+
+The command delegates installed-skill discovery to `npx skills ls --global --json`, then enriches each record with the corresponding `SKILL.md` frontmatter `description` and `skillFile` path. Use `--scope project` for project-local skills and repeat `--agent <name>` to filter by agent.
+
 ## Available Commands
 
 <!-- BEGIN GENERATED SECTION: commands -->
@@ -186,11 +196,14 @@ Machine-local paths are anchored by `SKILLPORT_ROOT` and, when needed, `AGENTDES
 │   ├── install-windows-auto-refresh.ps1
 │   ├── repository_registry.py
 │   ├── setup-local-links.sh
+│   ├── skillport
 │   ├── skillport-auto-refresh.ps1
 │   ├── skillport-auto-refresh.sh
 │   ├── skillport-sync.sh
+│   ├── skillport.py
 │   ├── test-auto-refresh-degraded-mode.py
 │   ├── test-repository-registry.py
+│   ├── test-skillport-catalog.py
 │   ├── test-windows-auto-refresh.py
 │   └── update-readme.sh
 ├── skills/
